@@ -138,15 +138,24 @@
                 <button onclick="closeAdminEditModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="adminEditForm" class="p-8 space-y-6">
+                <!-- เลขบัตรประชาชนใช้เป็น Key ในการค้นหาเพื่ออัปเดต -->
                 <input type="hidden" id="admin-edit-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-400 uppercase">ชื่อ</label>
-                        <input type="text" id="admin-edit-name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all">
+                        <input type="text" id="admin-edit-name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-400 uppercase">นามสกุล</label>
-                        <input type="text" id="admin-edit-surname" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all">
+                        <input type="text" id="admin-edit-surname" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">ชั้น</label>
+                        <input type="text" id="admin-edit-level" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">ห้อง</label>
+                        <input type="text" id="admin-edit-room" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
                     </div>
                 </div>
                 <div class="flex gap-4 pt-4">
@@ -158,9 +167,9 @@
     </div>
 
     <script>
+        // URL ของ Google Apps Script ที่ Deploy เป็น Web App
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
 
-        // Initialize Settings from LocalStorage
         window.onload = () => {
             const canEdit = localStorage.getItem('allowUserEdit') === 'true';
             const toggle = document.getElementById('toggleEdit');
@@ -195,7 +204,6 @@
             document.getElementById("adminPass").value = "";
         }
 
-        // Function to update permission (for users in index.html)
         function updateEditPermission(isEnabled) {
             localStorage.setItem('allowUserEdit', isEnabled);
             updateStatusLabel(isEnabled);
@@ -209,11 +217,12 @@
             }
         }
 
-        // Function for admin to open edit modal
-        function openAdminEdit(id, name, surname) {
+        function openAdminEdit(id, name, surname, level, room) {
             document.getElementById('admin-edit-id').value = id;
             document.getElementById('admin-edit-name').value = name;
             document.getElementById('admin-edit-surname').value = surname;
+            document.getElementById('admin-edit-level').value = level || "";
+            document.getElementById('admin-edit-room').value = room || "";
             document.getElementById('adminEditModal').classList.remove('hidden');
         }
 
@@ -221,23 +230,54 @@
             document.getElementById('adminEditModal').classList.add('hidden');
         }
 
-        function adminSaveData() {
+        // ฟังก์ชันบันทึกข้อมูลไปยัง Google Sheets จริง
+        async function adminSaveData() {
             const id = document.getElementById('admin-edit-id').value;
             const name = document.getElementById('admin-edit-name').value;
             const surname = document.getElementById('admin-edit-surname').value;
+            const level = document.getElementById('admin-edit-level').value;
+            const room = document.getElementById('admin-edit-room').value;
             const btn = document.getElementById('btnAdminSave');
 
-            btn.disabled = true;
-            btn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="spinner"></div><span>กำลังบันทึก...</span></div>`;
+            if (!name || !surname) {
+                alert("กรุณากรอกชื่อและนามสกุล");
+                return;
+            }
 
-            // จำลองการส่งข้อมูล (ในหน้างานจริงต้องส่ง fetch แบบ POST ไปยัง Google Sheets)
-            setTimeout(() => {
-                alert(`แอดมินแก้ไขข้อมูลของ ${name} ${surname} สำเร็จแล้ว`);
+            btn.disabled = true;
+            btn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="spinner border-t-white"></div><span>กำลังบันทึก...</span></div>`;
+
+            try {
+                // สร้าง FormData เพื่อส่งแบบ POST (หลีกเลี่ยงปัญหา CORS กับ Apps Script บางกรณี)
+                const formData = new FormData();
+                formData.append('action', 'update');
+                formData.append('id', id); // เลขประจำตัวประชาชน
+                formData.append('name', name);
+                formData.append('surname', surname);
+                formData.append('level', level);
+                formData.append('room', room);
+
+                const response = await fetch(scriptURL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    alert(`บันทึกข้อมูลของ ${name} ${surname} เรียบร้อยแล้ว`);
+                    closeAdminEditModal();
+                    loadAdminData(); // โหลดข้อมูลใหม่เพื่ออัปเดตหน้าตาราง
+                } else {
+                    alert('เกิดข้อผิดพลาดจากระบบ: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการตั้งค่า Apps Script');
+            } finally {
                 btn.disabled = false;
                 btn.innerText = "บันทึกการเปลี่ยนแปลง";
-                closeAdminEditModal();
-                loadAdminData();
-            }, 1000);
+            }
         }
 
         function loadAdminData() {
@@ -262,7 +302,7 @@
                                 </td>
                                 <td class="px-6 py-5 text-center text-slate-500 font-medium">${st['ชั้น']}/${st['ห้อง']}</td>
                                 <td class="px-6 py-5 text-right pr-6">
-                                    <button onclick="openAdminEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}')" 
+                                    <button onclick="openAdminEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['ชั้น']}', '${st['ห้อง']}')" 
                                             class="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-700 transition-all active:scale-95 shadow-sm">
                                         <i class="fa-solid fa-user-pen mr-2"></i>แก้ไข
                                     </button>
