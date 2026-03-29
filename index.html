@@ -26,6 +26,16 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Small Spinner for Button */
+        .btn-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -84,7 +94,7 @@
                            onkeyup="if(event.key === 'Enter') searchData()" 
                            placeholder="พิมพ์ชื่อหรือนามสกุล..." 
                            class="w-full bg-white border border-slate-200 rounded-3xl pl-14 pr-36 py-6 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all text-xl shadow-sm">
-                    <button onclick="searchData()" 
+                    <button id="btnSearch" onclick="searchData()" 
                             class="absolute right-4 top-4 bottom-4 bg-sky-600 text-white px-8 rounded-2xl font-bold hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-sky-600/20">
                         ค้นหา
                     </button>
@@ -131,7 +141,9 @@
                     </div>
                 </div>
                 <div class="flex gap-4 pt-4">
-                    <button type="button" onclick="saveData()" class="flex-[2] bg-sky-600 text-white py-4 rounded-2xl font-bold hover:bg-sky-700 shadow-lg shadow-sky-600/20 active:scale-95 transition-all">บันทึกข้อมูล</button>
+                    <button type="button" id="btnSave" onclick="saveData()" class="flex-[2] bg-sky-600 text-white py-4 rounded-2xl font-bold hover:bg-sky-700 shadow-lg shadow-sky-600/20 active:scale-95 transition-all">
+                        บันทึกข้อมูล
+                    </button>
                     <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all">ยกเลิก</button>
                 </div>
             </form>
@@ -139,6 +151,7 @@
     </div>
 
     <script>
+        // URL ของ Google Apps Script (ตรวจสอบให้แน่ใจว่าเป็นตัวที่ Deploy เป็น Web App แล้ว)
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
 
         // ตรวจสอบสถานะและอัปเดต UI ทันทีที่โหลดหน้า
@@ -242,15 +255,52 @@
             document.getElementById('editModal').classList.add('hidden');
         }
 
-        function saveData() {
+        // ฟังก์ชันบันทึกข้อมูลไปยัง Google Sheets (ทำงานร่วมกับ doPost ใน Apps Script)
+        async function saveData() {
             const id = document.getElementById('edit-id').value;
             const name = document.getElementById('edit-name').value;
             const surname = document.getElementById('edit-surname').value;
-            
-            // ตัวอย่างจำลองการบันทึก
-            alert(`กำลังบันทึกข้อมูลของ ${name} ${surname} (ฟีเจอร์นี้ต้องเชื่อมต่อกับ Google Apps Script)`);
-            closeEditModal();
-            searchData();
+            const btn = document.getElementById('btnSave');
+
+            if (!name || !surname) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
+
+            // แสดงสถานะการโหลดบนปุ่ม
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="btn-spinner"></div><span>กำลังบันทึก...</span></div>`;
+
+            try {
+                // ส่งข้อมูลแบบ POST โดยใช้ FormData
+                const formData = new FormData();
+                formData.append('action', 'update');
+                formData.append('id', id);
+                formData.append('name', name);
+                formData.append('surname', surname);
+
+                const response = await fetch(scriptURL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+                    closeEditModal();
+                    searchData(); // โหลดข้อมูลใหม่เพื่อแสดงค่าที่แก้ไขล่าสุด
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('ไม่สามารถเชื่อมต่อกับ Google Sheets ได้ กรุณาตรวจสอบการตั้งค่า Apps Script');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
         }
     </script>
 </body>
