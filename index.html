@@ -3,298 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DMC Student Management System</title>
+    <title>DMC SNR - ค้นหาข้อมูล</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .loader { border-top-color: #0284c7; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        #sidebar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-collapsed { width: 80px; }
+        .sidebar-expanded { width: 260px; }
+        .menu-text { transition: opacity 0.2s; }
+        .collapsed .menu-text { opacity: 0; display: none; }
+        .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="flex h-screen overflow-hidden">
 
-    <!-- Navigation Bar -->
-    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2 text-sky-600 font-bold text-xl">
-                    <i class="fa-solid fa-graduation-cap text-2xl"></i>
-                    <span class="text-slate-800">DMC SNR</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="switchTab('user')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-sky-600">ค้นหา</button>
-                    <button onclick="switchTab('admin')" class="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-sky-700 transition-all">
-                        <i class="fa-solid fa-lock mr-1"></i> ส่วนแอดมิน
-                    </button>
-                </div>
-            </div>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-expanded bg-white border-r border-slate-200 flex flex-col z-50">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
+            <i class="fa-solid fa-graduation-cap text-2xl text-sky-600 mr-4"></i>
+            <span class="menu-text font-bold text-xl text-slate-800 whitespace-nowrap">DMC SNR</span>
         </div>
-    </nav>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8">
-        
-        <!-- Tab: User Search -->
-        <div id="tab-user" class="tab-content active space-y-6">
-            <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-sm border border-slate-200 text-center">
-                <h2 class="text-3xl font-bold text-slate-800 mb-2">🔍 ค้นหาข้อมูลนักเรียน</h2>
-                <p class="text-slate-500 text-sm mb-8">พิมพ์ชื่อ, นามสกุล, เลขบัตรประชาชน หรือรหัสนักเรียน เพื่อค้นหา</p>
-                
-                <div class="relative max-w-2xl mx-auto group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-sky-500 transition-colors">
+        <nav class="flex-1 py-6 px-3 space-y-2">
+            <a href="index.html" class="flex items-center px-4 py-3 active-menu font-medium transition-all group">
+                <i class="fa-solid fa-magnifying-glass w-6 text-lg"></i>
+                <span class="menu-text ml-3">ค้นหาข้อมูล</span>
+            </a>
+            <a href="admin.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-sky-600 rounded-xl transition-all group">
+                <i class="fa-solid fa-lock w-6 text-lg"></i>
+                <span class="menu-text ml-3">ส่วนแอดมิน</span>
+            </a>
+        </nav>
+
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="toggleSidebar()" class="w-full flex items-center px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
+                <i id="toggle-icon" class="fa-solid fa-angles-left w-6 text-lg"></i>
+                <span class="menu-text ml-3">ซ่อนเมนู</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-50">
+        <header class="h-16 flex items-center px-6 bg-white border-b border-slate-200 md:hidden">
+            <button onclick="toggleSidebar()" class="text-slate-500 text-xl"><i class="fa-solid fa-bars"></i></button>
+            <span class="ml-4 font-bold text-slate-800">DMC SNR</span>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="text-center py-10">
+                    <h1 class="text-3xl font-bold text-slate-800 mb-2">ค้นหาข้อมูลนักเรียน</h1>
+                    <p class="text-slate-500">พิมพ์ชื่อ, นามสกุล หรือรหัส เพื่อค้นหา</p>
+                </div>
+
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-sky-500 transition-colors">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
-                    <input type="text" id="searchInput" 
-                           onkeyup="if(event.key === 'Enter') searchData()"
-                           placeholder="เช่น สมชาย, 1100200xxxxxx, 34189..." 
-                           class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-32 py-4 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all text-lg shadow-inner">
-                    <button onclick="searchData()" 
-                            class="absolute right-2 top-2 bottom-2 bg-sky-600 text-white px-6 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-md active:scale-95">
-                        ค้นหา
-                    </button>
-                </div>
-            </div>
-
-            <!-- Results Area -->
-            <div id="resultsArea" class="hidden space-y-4">
-                <div id="loading" class="hidden flex flex-col items-center py-10">
-                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-12 w-12 mb-4"></div>
-                    <p class="text-slate-500 animate-pulse" id="loadingText">กำลังดึงข้อมูล...</p>
-                </div>
-                <div id="displayData" class="grid grid-cols-1 gap-4"></div>
-            </div>
-        </div>
-
-        <!-- Tab: Admin Panel (คงเดิม) -->
-        <div id="tab-admin" class="tab-content space-y-6">
-            <!-- Login State -->
-            <div id="admin-login" class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center">
-                <i class="fa-solid fa-shield-halved text-4xl text-sky-600 mb-4"></i>
-                <h2 class="text-xl font-bold mb-6">กรุณายืนยันตัวตนแอดมิน</h2>
-                <input type="password" id="adminPass" placeholder="รหัสผ่านแอดมิน" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-4 text-center outline-none focus:ring-2 ring-sky-500/20">
-                <button onclick="checkAdmin()" class="w-full bg-sky-600 text-white py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">เข้าสู่ระบบ</button>
-            </div>
-
-            <!-- Admin Logged In (คงเดิม) -->
-            <div id="admin-dashboard" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">ยินดีต้อนรับ แอดมิน</h2>
-                        <p class="text-slate-500 text-sm">คุณสามารถจัดการข้อมูลนักเรียนได้ทั้งหมด</p>
-                    </div>
-                    <button onclick="logoutAdmin()" class="px-4 py-2 text-sm font-bold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">ออกจากระบบ</button>
+                    <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') searchData()" placeholder="ค้นหาข้อมูล..." class="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-32 py-5 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all text-lg shadow-sm">
+                    <button onclick="searchData()" class="absolute right-3 top-3 bottom-3 bg-sky-600 text-white px-8 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-md active:scale-95">ค้นหา</button>
                 </div>
 
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
-                                <tr>
-                                    <th class="px-6 py-4">ชื่อ-นามสกุล</th>
-                                    <th class="px-6 py-4">ชั้น/ห้อง</th>
-                                    <th class="px-6 py-4">เลขประจำตัวประชาชน</th>
-                                    <th class="px-6 py-4 text-right">การจัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-table-body" class="divide-y divide-slate-50"></tbody>
-                        </table>
+                <div id="resultsArea" class="hidden">
+                    <div id="loading" class="hidden flex flex-col items-center py-12">
+                        <div class="w-10 h-10 border-4 border-slate-200 border-t-sky-600 rounded-full animate-spin mb-4"></div>
+                        <p class="text-slate-400 text-sm">กำลังค้นหาข้อมูล...</p>
                     </div>
+                    <div id="displayData" class="grid grid-cols-1 gap-4"></div>
                 </div>
             </div>
-        </div>
-    </main>
-
-    <!-- Edit Modal (คงเดิม) -->
-    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-pen mr-2 text-sky-600"></i>แก้ไขข้อมูลนักเรียน</h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="editForm" class="p-6 space-y-4">
-                <input type="hidden" id="edit-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">ชื่อ</label>
-                        <input type="text" id="edit-name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">นามสกุล</label>
-                        <input type="text" id="edit-surname" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">ระดับชั้น</label>
-                        <input type="text" id="edit-level" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">ห้อง</label>
-                        <input type="text" id="edit-room" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500">
-                    </div>
-                </div>
-                <div class="pt-6 flex gap-3">
-                    <button type="button" onclick="saveData()" id="saveBtn" class="flex-1 bg-sky-600 text-white py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">บันทึกข้อมูล</button>
-                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200">ยกเลิก</button>
-                </div>
-            </form>
-        </div>
+        </main>
     </div>
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
-        let isAdmin = false;
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + id).classList.add('active');
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('sidebar-expanded');
+            sidebar.classList.toggle('sidebar-collapsed');
+            sidebar.classList.toggle('collapsed');
+            icon.classList.toggle('fa-angles-left');
+            icon.classList.toggle('fa-angles-right');
         }
 
-        // --- Improved Universal Search Function ---
         function searchData() {
             const input = document.getElementById("searchInput").value.trim();
             const display = document.getElementById("displayData");
             const resultsArea = document.getElementById("resultsArea");
             const loading = document.getElementById("loading");
 
-            if (!input) return alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
-
+            if (!input) return;
             resultsArea.classList.remove('hidden');
             loading.classList.remove('hidden');
             display.innerHTML = "";
 
-            // ส่ง searchType เป็น "universal" เพื่อให้ฝั่ง GS เข้าใจว่าต้องหาทุกคอลัมน์
-            fetch(`${scriptURL}?searchType=universal&searchValue=${encodeURIComponent(input)}`)
+            fetch(`${scriptURL}?searchValue=${encodeURIComponent(input)}`)
                 .then(r => r.json())
                 .then(res => {
                     loading.classList.add('hidden');
-                    if (res.status === "error") return display.innerHTML = `<div class="p-6 text-center text-rose-500">❌ ${res.message}</div>`;
-                    if (res.count === 0) return display.innerHTML = `<div class="p-16 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200"><i class="fa-solid fa-face-frown text-5xl mb-4 opacity-20"></i><br><span class="text-lg">ไม่พบข้อมูลนักเรียน "${input}"</span></div>`;
-
+                    if (res.count === 0) {
+                        display.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400">ไม่พบข้อมูล</div>`;
+                        return;
+                    }
                     res.data.forEach(st => {
                         display.innerHTML += `
-                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-sky-200 transition-all">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-sky-300 transition-all">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-14 h-14 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-600 text-2xl font-bold shadow-sm">
-                                        ${st['ชื่อ'] ? st['ชื่อ'].charAt(0) : '?'}
-                                    </div>
+                                    <div class="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600"><i class="fa-solid fa-user"></i></div>
                                     <div>
-                                        <h4 class="font-bold text-slate-800 text-lg leading-tight">${st['คำนำหน้าชื่อ'] || ''}${st['ชื่อ']} ${st['นามสกุล']}</h4>
-                                        <p class="text-sm text-slate-500 mt-1">
-                                            <span class="bg-slate-100 px-2 py-0.5 rounded text-xs font-bold mr-1">ID: ${st['รหัสประจำตัวนักเรียน'] || '-'}</span> 
-                                            ชั้น ${st['ชั้น'] || '-'}/${st['ห้อง'] || '-'}
-                                        </p>
+                                        <h3 class="font-bold text-slate-800">${st['ชื่อ']} ${st['นามสกุล']}</h3>
+                                        <p class="text-xs text-slate-500">ชั้น ${st['ชั้น']}/${st['ห้อง']} • เลขประจำตัว ${st['รหัสประจำตัวนักเรียน']}</p>
                                     </div>
-                                </div>
-                                <div class="flex items-center gap-2 w-full md:w-auto">
-                                    <button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['ชั้น']}', '${st['ห้อง']}')" 
-                                            class="flex-1 md:flex-none px-5 py-2.5 bg-sky-50 text-sky-600 rounded-xl text-sm font-bold hover:bg-sky-600 hover:text-white transition-all">
-                                        <i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไขข้อมูล
-                                    </button>
                                 </div>
                             </div>
                         `;
                     });
-                })
-                .catch(e => {
-                    loading.classList.add('hidden');
-                    alert("การเชื่อมต่อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-                });
-        }
-
-        // --- Admin Functions ---
-        function checkAdmin() {
-            const pass = document.getElementById("adminPass").value;
-            if (pass === "1234") { 
-                isAdmin = true;
-                document.getElementById("admin-login").classList.add('hidden');
-                document.getElementById("admin-dashboard").classList.remove('hidden');
-                loadAdminData();
-            } else {
-                alert("รหัสผ่านไม่ถูกต้อง");
-            }
-        }
-
-        function logoutAdmin() {
-            isAdmin = false;
-            document.getElementById("admin-login").classList.remove('hidden');
-            document.getElementById("admin-dashboard").classList.add('hidden');
-            document.getElementById("adminPass").value = "";
-        }
-
-        function loadAdminData() {
-            const body = document.getElementById("admin-table-body");
-            body.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400 animate-pulse">กำลังโหลดข้อมูลระบบ...</td></tr>`;
-            
-            fetch(`${scriptURL}?action=getAll`)
-                .then(r => r.json())
-                .then(res => {
-                    body.innerHTML = "";
-                    if (!res.data || res.data.length === 0) return body.innerHTML = `<tr><td colspan="4" class="p-10 text-center">ไม่มีข้อมูล</td></tr>`;
-                    res.data.forEach(st => {
-                        body.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
-                                <td class="px-6 py-4 text-slate-500">${st['ชั้น']}/${st['ห้อง']}</td>
-                                <td class="px-6 py-4 font-mono text-xs text-slate-400">${st['เลขประจำตัวประชาชน']}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['ชั้น']}', '${st['ห้อง']}')" class="text-sky-600 hover:text-sky-800 font-bold bg-sky-50 px-3 py-1 rounded-lg">แก้ไข</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                });
-        }
-
-        // --- Edit Modal Functions ---
-        function openEdit(id, name, surname, level, room) {
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-name').value = name;
-            document.getElementById('edit-surname').value = surname;
-            document.getElementById('edit-level').value = level;
-            document.getElementById('edit-room').value = room;
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
-
-        function saveData() {
-            const id = document.getElementById('edit-id').value;
-            const data = {
-                action: 'update',
-                id: id,
-                name: document.getElementById('edit-name').value,
-                surname: document.getElementById('edit-surname').value,
-                level: document.getElementById('edit-level').value,
-                room: document.getElementById('edit-room').value
-            };
-
-            const btn = document.getElementById('saveBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin mr-2'></i>กำลังบันทึก...";
-
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            }).then(() => {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว");
-                closeEditModal();
-                if(isAdmin) loadAdminData();
-                else searchData();
-            }).catch(e => {
-                alert("เกิดข้อผิดพลาดในการบันทึก");
-            }).finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            });
+                }).catch(() => { loading.classList.add('hidden'); alert("Error connection"); });
         }
     </script>
 </body>
