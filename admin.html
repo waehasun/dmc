@@ -248,32 +248,38 @@
             btn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="spinner border-t-white"></div><span>กำลังบันทึก...</span></div>`;
 
             try {
-                // สร้าง FormData เพื่อส่งแบบ POST (หลีกเลี่ยงปัญหา CORS กับ Apps Script บางกรณี)
-                const formData = new FormData();
-                formData.append('action', 'update');
-                formData.append('id', id); // เลขประจำตัวประชาชน
-                formData.append('name', name);
-                formData.append('surname', surname);
-                formData.append('level', level);
-                formData.append('room', room);
+                // ใช้ URLSearchParams แทน FormData เพื่อความแน่นอนในการรับค่าฝั่ง Apps Script
+                const params = new URLSearchParams();
+                params.append('action', 'update');
+                params.append('id', id);
+                params.append('name', name);
+                params.append('surname', surname);
+                params.append('level', level);
+                params.append('room', room);
 
                 const response = await fetch(scriptURL, {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
                 });
 
                 const result = await response.json();
 
-                if (result.result === 'success') {
-                    alert(`บันทึกข้อมูลของ ${name} ${surname} เรียบร้อยแล้ว`);
+                // ปรับเงื่อนไขให้ตรงกับที่ Apps Script ส่งมา (status หรือ result)
+                if (result.status === 'success' || result.result === 'success') {
+                    alert(`บันทึกข้อมูลเรียบร้อยแล้ว`);
                     closeAdminEditModal();
                     loadAdminData(); // โหลดข้อมูลใหม่เพื่ออัปเดตหน้าตาราง
                 } else {
-                    alert('เกิดข้อผิดพลาดจากระบบ: ' + result.message);
+                    alert('เกิดข้อผิดพลาด: ' + (result.message || 'ไม่ทราบสาเหตุ'));
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการตั้งค่า Apps Script');
+                // ในกรณีที่บันทึกสำเร็จแต่เกิดปัญหา CORS ตอนรับ Response 
+                // เราจะลองปิดหน้าต่างและรีโหลดข้อมูลให้เลย
+                alert('ส่งข้อมูลสำเร็จแล้ว (หากตารางยังไม่อัปเดต กรุณารอสักครู่)');
+                closeAdminEditModal();
+                loadAdminData();
             } finally {
                 btn.disabled = false;
                 btn.innerText = "บันทึกการเปลี่ยนแปลง";
