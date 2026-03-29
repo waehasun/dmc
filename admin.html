@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMC SNR - ส่วนแอดมิน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        #sidebar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-collapsed { width: 80px; }
+        .sidebar-expanded { width: 260px; }
+        .menu-text { transition: opacity 0.2s; }
+        .collapsed .menu-text { opacity: 0; display: none; }
+        .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-expanded bg-white border-r border-slate-200 flex flex-col z-50">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
+            <i class="fa-solid fa-graduation-cap text-2xl text-sky-600 mr-4"></i>
+            <span class="menu-text font-bold text-xl text-slate-800 whitespace-nowrap">DMC SNR</span>
+        </div>
+
+        <nav class="flex-1 py-6 px-3 space-y-2">
+            <a href="index.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-sky-600 rounded-xl transition-all group">
+                <i class="fa-solid fa-magnifying-glass w-6 text-lg"></i>
+                <span class="menu-text ml-3">ค้นหาข้อมูล</span>
+            </a>
+            <a href="admin.html" class="flex items-center px-4 py-3 active-menu font-medium transition-all group">
+                <i class="fa-solid fa-lock w-6 text-lg"></i>
+                <span class="menu-text ml-3">ส่วนแอดมิน</span>
+            </a>
+        </nav>
+
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="toggleSidebar()" class="w-full flex items-center px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
+                <i id="toggle-icon" class="fa-solid fa-angles-left w-6 text-lg"></i>
+                <span class="menu-text ml-3">ซ่อนเมนู</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-50">
+        <header class="h-16 flex items-center px-6 bg-white border-b border-slate-200 md:hidden">
+            <button onclick="toggleSidebar()" class="text-slate-500 text-xl"><i class="fa-solid fa-bars"></i></button>
+            <span class="ml-4 font-bold text-slate-800">DMC SNR Admin</span>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div id="admin-login" class="max-w-md mx-auto bg-white p-10 rounded-3xl shadow-sm border border-slate-200 text-center mt-12">
+                <div class="w-20 h-20 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2 class="text-2xl font-bold mb-8">Admin Login</h2>
+                <input type="password" id="adminPass" placeholder="รหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 mb-4 text-center text-xl outline-none focus:ring-2 ring-sky-500/20">
+                <button onclick="checkAdmin()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all">เข้าสู่ระบบ</button>
+            </div>
+
+            <div id="admin-dashboard" class="hidden max-w-5xl mx-auto space-y-6">
+                <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">จัดการข้อมูลนักเรียน</h2>
+                        <p class="text-slate-500 text-sm">ตรวจสอบและแก้ไขข้อมูลทั้งหมด</p>
+                    </div>
+                    <button onclick="location.reload()" class="px-6 py-2.5 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100">ออกจากระบบ</button>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="px-6 py-4">ชื่อ-นามสกุล</th>
+                                    <th class="px-6 py-4 text-center">ชั้น/ห้อง</th>
+                                    <th class="px-6 py-4 text-right pr-10">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body" class="divide-y divide-slate-100">
+                                <!-- Data rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('sidebar-expanded');
+            sidebar.classList.toggle('sidebar-collapsed');
+            sidebar.classList.toggle('collapsed');
+            icon.classList.toggle('fa-angles-left');
+            icon.classList.toggle('fa-angles-right');
+        }
+
+        function checkAdmin() {
+            const pass = document.getElementById("adminPass").value;
+            if (pass === "1234") { 
+                document.getElementById("admin-login").classList.add('hidden');
+                document.getElementById("admin-dashboard").classList.remove('hidden');
+                loadAdminData();
+            } else { alert("รหัสผ่านไม่ถูกต้อง"); }
+        }
+
+        function loadAdminData() {
+            const body = document.getElementById("admin-table-body");
+            body.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูล...</td></tr>`;
+            fetch(`${scriptURL}?action=getAll`)
+                .then(r => r.json())
+                .then(res => {
+                    body.innerHTML = "";
+                    res.data.forEach(st => {
+                        body.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
+                                <td class="px-6 py-4 text-center text-slate-500">${st['ชั้น']}/${st['ห้อง']}</td>
+                                <td class="px-6 py-4 text-right pr-6"><button class="text-sky-600 font-bold">จัดการ</button></td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
