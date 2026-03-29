@@ -35,22 +35,21 @@
             btn.disabled = true;
             btn.innerHTML = 'กำลังบันทึก...';
 
-            // ส่งข้อมูลผ่าน Fetch API ไปยัง Google Apps Script
-            fetch(scriptURL, { method: 'POST', body: new FormData(form), mode: 'no-cors'})
+    // ส่งข้อมูลผ่าน Fetch API ไปยัง Google Apps Script (แปลงข้อมูลเป็น URLSearchParams)
+                const data = new URLSearchParams(new FormData(form));
+    
+                fetch(scriptURL, { 
+                    method: 'POST', 
+                    body: data, 
+                    mode: 'no-cors' // ใส่ไว้เพื่อกันเบราว์เซอร์บล็อกการตอบกลับ
+                })
                 .then(response => {
                     message.innerHTML = "บันทึกข้อมูลสำเร็จแล้ว!";
                     message.style.color = "green";
-                    form.reset(); // ล้างข้อมูลในฟอร์ม
+                    form.reset(); 
                     btn.disabled = false;
                     btn.innerHTML = 'บันทึกข้อมูล';
                 })
-                .catch(error => {
-                    console.error('Error!', error.message);
-                    message.innerHTML = "เกิดข้อผิดพลาดในการบันทึก";
-                    message.style.color = "red";
-                    btn.disabled = false;
-                    btn.innerHTML = 'บันทึกข้อมูล';
-                });
         });
     </script>
 </body>
