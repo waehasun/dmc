@@ -1,13 +1,57 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <base target="_top">
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เว็บแอป</title>
+    <title>แบบฟอร์มบันทึกข้อมูล DMC</title>
 </head>
 <body>
-    <iframe style="width: 100%; height: 100vh;" scrolling="yes" src="https://script.google.com/a/macros/kbyala.ac.th/s/AKfycbxqqySzeG6Lsd-n5bucghrhtauq4KJs1SDVD5Wm0Y79ol6Sgu3saJ0e6LL7mFuqdsOL/exec" frameborder="0"></iframe>
+
+    <h2>กรอกข้อมูลของคุณ</h2>
+    
+    <form id="myForm">
+        <label>ชื่อ:</label>
+        <input type="text" name="ชื่อ" required><br><br>
+        
+        <label>นามสกุล:</label>
+        <input type="text" name="นามสกุล" required><br><br>
+        
+        <label>เบอร์โทรศัพท์:</label>
+        <input type="text" name="เบอร์โทรศัพท์"><br><br>
+        
+        <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+        // เอา URL ที่ได้จากขั้นตอนที่ 3 มาใส่ตรงนี้
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec'; 
+        const form = document.getElementById('myForm');
+        const btn = document.getElementById('submitBtn');
+        const message = document.getElementById('message');
+
+        form.addEventListener('submit', e => {
+            e.preventDefault(); // ป้องกันไม่ให้หน้าเว็บรีเฟรช
+            btn.disabled = true;
+            btn.innerHTML = 'กำลังบันทึก...';
+
+            // ส่งข้อมูลผ่าน Fetch API ไปยัง Google Apps Script
+            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+                .then(response => {
+                    message.innerHTML = "บันทึกข้อมูลสำเร็จแล้ว!";
+                    message.style.color = "green";
+                    form.reset(); // ล้างข้อมูลในฟอร์ม
+                    btn.disabled = false;
+                    btn.innerHTML = 'บันทึกข้อมูล';
+                })
+                .catch(error => {
+                    console.error('Error!', error.message);
+                    message.innerHTML = "เกิดข้อผิดพลาดในการบันทึก";
+                    message.style.color = "red";
+                    btn.disabled = false;
+                    btn.innerHTML = 'บันทึกข้อมูล';
+                });
+        });
+    </script>
 </body>
 </html>
