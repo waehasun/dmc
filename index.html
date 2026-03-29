@@ -36,27 +36,74 @@
     </div>
 
     <script>
-        // ================= สคริปต์การทำงาน (JavaScript) =================
+        // 🚨 เอา URL Web App อันใหม่ของคุณมาใส่ตรงนี้ 🚨
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
 
-        // 1. ฟังก์ชันเมื่อกดปุ่มค้นหา
+        // ฟังก์ชันเมื่อกดปุ่มค้นหา
         function searchData() {
             const searchType = document.getElementById("searchType").value;
             const searchInput = document.getElementById("searchInput").value;
             const resultsArea = document.getElementById("resultsArea");
+            const loadingText = document.getElementById("loadingText");
+            const displayData = document.getElementById("displayData");
 
             if (searchInput.trim() === "") {
                 alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
                 return;
             }
 
-            // แสดงกล่องผลลัพธ์
+            // แสดงสถานะกำลังโหลด
             resultsArea.style.display = "block";
-            document.getElementById("loadingText").innerHTML = `กำลังค้นหา "${searchInput}" จาก ${searchType}... ⏳`;
-            
-            // 📍 ตรงนี้เดี๋ยวเราจะมาเขียนโค้ด fetch() ไปยัง Google Apps Script (doGet) เพื่อดึงข้อมูลมาแสดงครับ
+            displayData.innerHTML = "";
+            loadingText.style.display = "block";
+            loadingText.innerHTML = `กำลังค้นหา "${searchInput}" จาก ${searchType}... ⏳`;
+
+            // สร้าง URL สำหรับดึงข้อมูล (GET Request)
+            const fetchUrl = `${scriptURL}?searchType=${encodeURIComponent(searchType)}&searchValue=${encodeURIComponent(searchInput)}`;
+
+            // ส่งคำขอไปยัง Google Apps Script
+            fetch(fetchUrl)
+                .then(response => response.json())
+                .then(result => {
+                    loadingText.style.display = "none";
+
+                    if (result.status === "error") {
+                        displayData.innerHTML = `<p style="color:red; text-align:center;">❌ เกิดข้อผิดพลาด: ${result.message}</p>`;
+                        return;
+                    }
+
+                    if (result.count === 0) {
+                        displayData.innerHTML = `<p style="color:#e67e22; text-align:center;">⚠️ ไม่พบข้อมูลนักเรียนที่ค้นหา</p>`;
+                        return;
+                    }
+
+                    // แสดงผลข้อมูลที่หาเจอ (สร้างเป็นการ์ดสวยๆ)
+                    let htmlOutput = `<p style="color:green; margin-bottom: 15px;">✅ พบข้อมูลทั้งหมด ${result.count} รายการ</p>`;
+                    
+                    result.data.forEach(student => {
+                        htmlOutput += `
+                            <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fdfdfd; text-align: left;">
+                                <h3 style="color: #2c3e50; margin-bottom: 10px;">
+                                    ${student['คำนำหน้าชื่อ'] || ''}${student['ชื่อ'] || ''} ${student['นามสกุล'] || ''}
+                                </h3>
+                                <p><strong>รหัสประจำตัวนักเรียน:</strong> ${student['รหัสประจำตัวนักเรียน'] || '-'}</p>
+                                <p><strong>เลขประจำตัวประชาชน:</strong> ${student['เลขประจำตัวประชาชน'] || '-'}</p>
+                                <p><strong>ระดับชั้น:</strong> ${student['ชั้น'] || '-'} / ${student['ห้อง'] || '-'}</p>
+                                <p><strong>ชื่อผู้ปกครอง:</strong> ${student['ชื่อผู้ปกครอง'] || '-'} ${student['นามสกุลผู้ปกครอง'] || '-'}</p>
+                            </div>
+                        `;
+                    });
+
+                    displayData.innerHTML = htmlOutput;
+                })
+                .catch(error => {
+                    loadingText.style.display = "none";
+                    displayData.innerHTML = `<p style="color:red; text-align:center;">❌ ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่</p>`;
+                    console.error('Error fetching data:', error);
+                });
         }
 
-        // 2. ฟังก์ชันไปหน้าจัดการข้อมูล (เตรียมรอไว้)
+        // ฟังก์ชันไปหน้าจัดการข้อมูล
         function goToManagePage() {
             alert("เดี๋ยวจะพาไปหน้าจัดการข้อมูล (รอกำหนดรายละเอียดครับ)");
         }
