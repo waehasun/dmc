@@ -79,9 +79,7 @@
                     <h1 class="text-3xl font-bold text-slate-800 mb-2">ระบบค้นหาข้อมูลนักเรียน</h1>
                     <p class="text-slate-500">กรุณากรอกชื่อ นามสกุล หรือเลขประจำตัวประชาชนเพื่อค้นหา</p>
                     
-                    <!-- แสดงสถานะการแก้ไขปัจจุบัน -->
                     <div id="permissionStatus" class="mt-4 inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold">
-                        <!-- จะถูกเติมด้วย JavaScript -->
                     </div>
                 </div>
 
@@ -98,15 +96,6 @@
                             class="absolute right-4 top-4 bottom-4 bg-sky-600 text-white px-8 rounded-2xl font-bold hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-sky-600/20">
                         ค้นหา
                     </button>
-                </div>
-
-                <!-- Status Banner (แจ้งเตือนหากปิดการแก้ไข) -->
-                <div id="editDisabledBanner" class="hidden bg-amber-50 border border-amber-200 p-5 rounded-3xl flex items-start gap-4 text-amber-800">
-                    <div class="mt-1"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
-                    <div>
-                        <p class="font-bold text-lg">โหมดอ่านอย่างเดียว</p>
-                        <p class="text-sm opacity-80">แอดมินปิดการแก้ไขข้อมูลในขณะนี้ คุณสามารถค้นหาและดูข้อมูลได้ แต่ไม่สามารถเปลี่ยนแปลงข้อมูลได้</p>
-                    </div>
                 </div>
 
                 <!-- Results Display Area -->
@@ -129,6 +118,7 @@
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="editForm" class="p-8 space-y-6">
+                <!-- เลขประจำตัวประชาชนใช้เป็น ID ในการค้นหาแถวเพื่ออัปเดต -->
                 <input type="hidden" id="edit-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1">
@@ -167,10 +157,9 @@
     </div>
 
     <script>
-        // URL ของ Google Apps Script (ตรวจสอบให้แน่ใจว่าเป็นตัวที่ Deploy เป็น Web App แล้ว)
+        // *** สำคัญ: ต้องใส่ URL Web App ของคุณที่นี่ ***
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
 
-        // ตรวจสอบสถานะและอัปเดต UI ทันทีที่โหลดหน้า
         window.onload = updateUIPermission;
 
         function checkEditPermission() {
@@ -205,7 +194,6 @@
             const display = document.getElementById("displayData");
             const resultsArea = document.getElementById("resultsArea");
             const loading = document.getElementById("loading");
-            const banner = document.getElementById("editDisabledBanner");
 
             if (!input) return;
 
@@ -214,7 +202,6 @@
             display.innerHTML = "";
             
             const canEdit = checkEditPermission();
-            banner.classList.toggle('hidden', canEdit);
 
             fetch(`${scriptURL}?searchValue=${encodeURIComponent(input)}`)
                 .then(r => r.json())
@@ -242,7 +229,7 @@
                                     <div>
                                         <h3 class="font-bold text-slate-800 text-xl">${st['ชื่อ']} ${st['นามสกุล']}</h3>
                                         <div class="flex flex-wrap gap-4 text-sm text-slate-500 mt-1">
-                                            <span class="flex items-center"><i class="fa-solid fa-school-flag mr-2 text-slate-300"></i>ชั้น ${st['ชั้น']}/${st['ห้อง']}</span>
+                                            <span class="flex items-center"><i class="fa-solid fa-school-flag mr-2 text-slate-300"></i>ชั้น ${st['ชั้น'] || '-'}/${st['ห้อง'] || '-'}</span>
                                             <span class="flex items-center"><i class="fa-solid fa-cake-candles mr-2 text-slate-300"></i>เกิด: ${st['วันเกิด'] || '-'}</span>
                                             <span class="flex items-center"><i class="fa-solid fa-weight-scale mr-2 text-slate-300"></i>${st['น้ำหนัก'] || '-'} กก.</span>
                                             <span class="flex items-center"><i class="fa-solid fa-ruler-vertical mr-2 text-slate-300"></i>${st['ส่วนสูง'] || '-'} ซม.</span>
@@ -266,10 +253,10 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-surname').value = surname;
-            document.getElementById('edit-birth').value = birth !== 'undefined' ? birth : "";
-            document.getElementById('edit-age').value = age !== 'undefined' ? age : "";
-            document.getElementById('edit-weight').value = weight !== 'undefined' ? weight : "";
-            document.getElementById('edit-height').value = height !== 'undefined' ? height : "";
+            document.getElementById('edit-birth').value = (birth && birth !== 'undefined') ? birth : "";
+            document.getElementById('edit-age').value = (age && age !== 'undefined') ? age : "";
+            document.getElementById('edit-weight').value = (weight && weight !== 'undefined') ? weight : "";
+            document.getElementById('edit-height').value = (height && height !== 'undefined') ? height : "";
             document.getElementById('editModal').classList.remove('hidden');
         }
 
@@ -277,56 +264,56 @@
             document.getElementById('editModal').classList.add('hidden');
         }
 
-        // ฟังก์ชันบันทึกข้อมูลไปยัง Google Sheets (ทำงานร่วมกับ doPost ใน Apps Script)
         async function saveData() {
-            const id = document.getElementById('edit-id').value;
-            const name = document.getElementById('edit-name').value;
-            const surname = document.getElementById('edit-surname').value;
-            const birth = document.getElementById('edit-birth').value;
-            const age = document.getElementById('edit-age').value;
-            const weight = document.getElementById('edit-weight').value;
-            const height = document.getElementById('edit-height').value;
             const btn = document.getElementById('btnSave');
+            
+            // เตรียมข้อมูลจาก Form
+            const payload = {
+                action: 'update',
+                id: document.getElementById('edit-id').value,
+                name: document.getElementById('edit-name').value,
+                surname: document.getElementById('edit-surname').value,
+                birth: document.getElementById('edit-birth').value,
+                age: document.getElementById('edit-age').value,
+                weight: document.getElementById('edit-weight').value,
+                height: document.getElementById('edit-height').value
+            };
 
-            if (!name || !surname) {
+            if (!payload.name || !payload.surname) {
                 alert("กรุณากรอกข้อมูลชื่อและนามสกุลให้ครบถ้วน");
                 return;
             }
 
-            // แสดงสถานะการโหลดบนปุ่ม
+            // แสดงสถานะการโหลด
             const originalContent = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="btn-spinner"></div><span>กำลังบันทึก...</span></div>`;
 
             try {
-                // ส่งข้อมูลแบบ POST โดยใช้ FormData
-                const formData = new FormData();
-                formData.append('action', 'update');
-                formData.append('id', id);
-                formData.append('name', name);
-                formData.append('surname', surname);
-                formData.append('birth', birth);
-                formData.append('age', age);
-                formData.append('weight', weight);
-                formData.append('height', height);
-
+                // ส่งข้อมูลไปยัง Google Apps Script
+                // ใช้ x-www-form-urlencoded เพื่อให้เข้ากับตัวอย่าง doGet/doPost มาตรฐาน
                 const response = await fetch(scriptURL, {
                     method: 'POST',
-                    body: formData
+                    mode: 'no-cors', // สำคัญ: เพื่อเลี่ยงปัญหา CORS ขณะส่งข้อมูลข้าม Domain
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(payload).toString()
                 });
 
-                const result = await response.json();
-
-                if (result.result === 'success') {
-                    alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+                // หมายเหตุ: เมื่อใช้ mode: 'no-cors' เราจะไม่เห็น JSON Response
+                // แต่ถ้าระบบ Apps Script ทำงานถูกต้อง ข้อมูลจะถูกบันทึก
+                
+                setTimeout(() => {
+                    alert('ส่งคำขอแก้ไขข้อมูลแล้ว กรุณารอสักครู่แล้วค้นหาใหม่เพื่อตรวจสอบ');
                     closeEditModal();
-                    searchData(); // โหลดข้อมูลใหม่เพื่อแสดงค่าที่แก้ไขล่าสุด
-                } else {
-                    alert('เกิดข้อผิดพลาด: ' + result.message);
-                }
+                    searchData(); 
+                }, 1000);
+
             } catch (error) {
                 console.error('Error:', error);
-                alert('ไม่สามารถเชื่อมต่อกับ Google Sheets ได้ กรุณาตรวจสอบการตั้งค่า Apps Script');
+                alert('ไม่สามารถเชื่อมต่อกับ Google Sheets ได้');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
