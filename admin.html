@@ -15,6 +15,11 @@
         .menu-text { transition: opacity 0.2s; }
         .collapsed .menu-text { opacity: 0; display: none; }
         .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
+        
+        /* Toggle Switch Style */
+        .dot { transition: all 0.3s ease-in-out; }
+        input:checked ~ .dot { transform: translateX(100%); background-color: #ffffff; }
+        input:checked ~ .block { background-color: #0284c7; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -52,6 +57,7 @@
         </header>
 
         <main class="flex-1 overflow-y-auto p-4 md:p-8">
+            <!-- Login Section -->
             <div id="admin-login" class="max-w-md mx-auto bg-white p-10 rounded-3xl shadow-sm border border-slate-200 text-center mt-12">
                 <div class="w-20 h-20 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6"><i class="fa-solid fa-shield-halved"></i></div>
                 <h2 class="text-2xl font-bold mb-8">Admin Login</h2>
@@ -59,16 +65,41 @@
                 <button onclick="checkAdmin()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all">เข้าสู่ระบบ</button>
             </div>
 
+            <!-- Dashboard Section -->
             <div id="admin-dashboard" class="hidden max-w-5xl mx-auto space-y-6">
-                <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">จัดการข้อมูลนักเรียน</h2>
-                        <p class="text-slate-500 text-sm">ตรวจสอบและแก้ไขข้อมูลทั้งหมด</p>
+                
+                <!-- System Settings Card -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2 flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">จัดการข้อมูลนักเรียน</h2>
+                            <p class="text-slate-500 text-sm">ตรวจสอบและแก้ไขข้อมูลทั้งหมดในฐานข้อมูล</p>
+                        </div>
+                        <button onclick="location.reload()" class="px-6 py-2.5 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100 transition-colors">
+                            <i class="fa-solid fa-power-off mr-2"></i>ออกจากระบบ
+                        </button>
                     </div>
-                    <button onclick="location.reload()" class="px-6 py-2.5 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100">ออกจากระบบ</button>
+
+                    <!-- Toggle Edit Control -->
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center space-y-3">
+                        <span class="text-sm font-bold text-slate-600 uppercase tracking-wider">สิทธิ์การแก้ไข (หน้าค้นหา)</span>
+                        <label for="toggleEdit" class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" id="toggleEdit" class="sr-only" onchange="updateEditPermission(this.checked)">
+                                <div class="block bg-slate-200 w-14 h-8 rounded-full"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow-sm transition"></div>
+                            </div>
+                            <div class="ml-3 text-slate-700 font-medium" id="statusLabel">ปิดอยู่</div>
+                        </label>
+                    </div>
                 </div>
 
+                <!-- Data Table Card -->
                 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800">รายชื่อนักเรียนทั้งหมด</h3>
+                        <div class="text-xs text-slate-400">แสดงผลข้อมูลล่าสุดจากระบบ</div>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
@@ -91,6 +122,16 @@
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
 
+        // Initialize Settings from LocalStorage
+        window.onload = () => {
+            const canEdit = localStorage.getItem('allowUserEdit') === 'true';
+            const toggle = document.getElementById('toggleEdit');
+            if(toggle) {
+                toggle.checked = canEdit;
+                updateStatusLabel(canEdit);
+            }
+        };
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('toggle-icon');
@@ -110,6 +151,23 @@
             } else { alert("รหัสผ่านไม่ถูกต้อง"); }
         }
 
+        // Function to update permission
+        function updateEditPermission(isEnabled) {
+            localStorage.setItem('allowUserEdit', isEnabled);
+            updateStatusLabel(isEnabled);
+            
+            // Optional: You could also send this setting to your Google Sheet if you have a settings sheet
+            console.log("Edit permission set to:", isEnabled);
+        }
+
+        function updateStatusLabel(isEnabled) {
+            const label = document.getElementById('statusLabel');
+            if (label) {
+                label.innerText = isEnabled ? "เปิดให้แก้ไขได้" : "ปิดการแก้ไข";
+                label.className = isEnabled ? "ml-3 text-sky-600 font-bold" : "ml-3 text-slate-400 font-medium";
+            }
+        }
+
         function loadAdminData() {
             const body = document.getElementById("admin-table-body");
             body.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูล...</td></tr>`;
@@ -122,7 +180,11 @@
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
                                 <td class="px-6 py-4 text-center text-slate-500">${st['ชั้น']}/${st['ห้อง']}</td>
-                                <td class="px-6 py-4 text-right pr-6"><button class="text-sky-600 font-bold">จัดการ</button></td>
+                                <td class="px-6 py-4 text-right pr-6">
+                                    <button class="bg-sky-50 text-sky-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-sky-100 transition-colors">
+                                        แก้ไขข้อมูล
+                                    </button>
+                                </td>
                             </tr>
                         `;
                     });
