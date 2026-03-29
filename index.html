@@ -139,6 +139,22 @@
                         <label class="text-xs font-bold text-slate-400 uppercase">นามสกุล</label>
                         <input type="text" id="edit-surname" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
                     </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">วันเกิด (วว/ดด/ปปปป)</label>
+                        <input type="text" id="edit-birth" placeholder="เช่น 18/05/2555" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">อายุ (ปี)</label>
+                        <input type="number" id="edit-age" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">น้ำหนัก (กก.)</label>
+                        <input type="number" step="0.1" id="edit-weight" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">ส่วนสูง (ซม.)</label>
+                        <input type="number" id="edit-height" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
+                    </div>
                 </div>
                 <div class="flex gap-4 pt-4">
                     <button type="button" id="btnSave" onclick="saveData()" class="flex-[2] bg-sky-600 text-white py-4 rounded-2xl font-bold hover:bg-sky-700 shadow-lg shadow-sky-600/20 active:scale-95 transition-all">
@@ -211,7 +227,7 @@
 
                     res.data.forEach(st => {
                         const editBtn = canEdit 
-                            ? `<button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}')" 
+                            ? `<button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['วันเกิด']}', '${st['อายุ(ปี)']}', '${st['น้ำหนัก']}', '${st['ส่วนสูง']}')" 
                                        class="px-5 py-2.5 bg-sky-600 text-white rounded-xl text-sm font-bold hover:bg-sky-700 transition-all shadow-md shadow-sky-600/10">
                                    <i class="fa-solid fa-pen-to-square mr-2"></i>แก้ไข
                                </button>`
@@ -227,7 +243,9 @@
                                         <h3 class="font-bold text-slate-800 text-xl">${st['ชื่อ']} ${st['นามสกุล']}</h3>
                                         <div class="flex flex-wrap gap-4 text-sm text-slate-500 mt-1">
                                             <span class="flex items-center"><i class="fa-solid fa-school-flag mr-2 text-slate-300"></i>ชั้น ${st['ชั้น']}/${st['ห้อง']}</span>
-                                            <span class="flex items-center"><i class="fa-solid fa-id-card-clip mr-2 text-slate-300"></i>${st['รหัสประจำตัวนักเรียน']}</span>
+                                            <span class="flex items-center"><i class="fa-solid fa-cake-candles mr-2 text-slate-300"></i>เกิด: ${st['วันเกิด'] || '-'}</span>
+                                            <span class="flex items-center"><i class="fa-solid fa-weight-scale mr-2 text-slate-300"></i>${st['น้ำหนัก'] || '-'} กก.</span>
+                                            <span class="flex items-center"><i class="fa-solid fa-ruler-vertical mr-2 text-slate-300"></i>${st['ส่วนสูง'] || '-'} ซม.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -244,10 +262,14 @@
                 });
         }
 
-        function openEdit(id, name, surname) {
+        function openEdit(id, name, surname, birth, age, weight, height) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-surname').value = surname;
+            document.getElementById('edit-birth').value = birth !== 'undefined' ? birth : "";
+            document.getElementById('edit-age').value = age !== 'undefined' ? age : "";
+            document.getElementById('edit-weight').value = weight !== 'undefined' ? weight : "";
+            document.getElementById('edit-height').value = height !== 'undefined' ? height : "";
             document.getElementById('editModal').classList.remove('hidden');
         }
 
@@ -260,10 +282,14 @@
             const id = document.getElementById('edit-id').value;
             const name = document.getElementById('edit-name').value;
             const surname = document.getElementById('edit-surname').value;
+            const birth = document.getElementById('edit-birth').value;
+            const age = document.getElementById('edit-age').value;
+            const weight = document.getElementById('edit-weight').value;
+            const height = document.getElementById('edit-height').value;
             const btn = document.getElementById('btnSave');
 
             if (!name || !surname) {
-                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+                alert("กรุณากรอกข้อมูลชื่อและนามสกุลให้ครบถ้วน");
                 return;
             }
 
@@ -279,6 +305,10 @@
                 formData.append('id', id);
                 formData.append('name', name);
                 formData.append('surname', surname);
+                formData.append('birth', birth);
+                formData.append('age', age);
+                formData.append('weight', weight);
+                formData.append('height', height);
 
                 const response = await fetch(scriptURL, {
                     method: 'POST',
