@@ -41,20 +41,20 @@
         
         <!-- Tab: User Search -->
         <div id="tab-user" class="tab-content active space-y-6">
-            <div class="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-200 text-center">
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">🔍 ค้นหาข้อมูลนักเรียน</h2>
-                <p class="text-slate-500 text-sm mb-8">กรอกข้อมูลเพื่อตรวจสอบประวัตินักเรียนในระบบ DMC</p>
+            <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-sm border border-slate-200 text-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">🔍 ค้นหาข้อมูลนักเรียน</h2>
+                <p class="text-slate-500 text-sm mb-8">พิมพ์ชื่อ, นามสกุล, เลขบัตรประชาชน หรือรหัสนักเรียน เพื่อค้นหา</p>
                 
-                <div class="flex flex-col md:flex-row gap-3 max-w-3xl mx-auto">
-                    <select id="searchType" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20 text-sm font-medium">
-                        <option value="เลขประจำตัวประชาชน">เลขบัตรประชาชน</option>
-                        <option value="รหัสประจำตัวนักเรียน">รหัสนักเรียน</option>
-                        <option value="ชื่อ">ชื่อ</option>
-                        <option value="นามสกุล">นามสกุล</option>
-                    </select>
-                    <input type="text" id="searchInput" placeholder="พิมพ์ข้อมูลที่ต้องการค้นหา..." 
-                           class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
-                    <button onclick="searchData()" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
+                <div class="relative max-w-2xl mx-auto group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-sky-500 transition-colors">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" id="searchInput" 
+                           onkeyup="if(event.key === 'Enter') searchData()"
+                           placeholder="เช่น สมชาย, 1100200xxxxxx, 34189..." 
+                           class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-32 py-4 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all text-lg shadow-inner">
+                    <button onclick="searchData()" 
+                            class="absolute right-2 top-2 bottom-2 bg-sky-600 text-white px-6 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-md active:scale-95">
                         ค้นหา
                     </button>
                 </div>
@@ -70,7 +70,7 @@
             </div>
         </div>
 
-        <!-- Tab: Admin Panel -->
+        <!-- Tab: Admin Panel (คงเดิม) -->
         <div id="tab-admin" class="tab-content space-y-6">
             <!-- Login State -->
             <div id="admin-login" class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center">
@@ -80,36 +80,28 @@
                 <button onclick="checkAdmin()" class="w-full bg-sky-600 text-white py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">เข้าสู่ระบบ</button>
             </div>
 
-            <!-- Admin Logged In -->
+            <!-- Admin Logged In (คงเดิม) -->
             <div id="admin-dashboard" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-800">ยินดีต้อนรับ แอดมิน</h2>
-                        <p class="text-slate-500 text-sm">คุณสามารถอนุญาตการแก้ไขข้อมูลได้ที่นี่</p>
+                        <p class="text-slate-500 text-sm">คุณสามารถจัดการข้อมูลนักเรียนได้ทั้งหมด</p>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="logoutAdmin()" class="px-4 py-2 text-sm font-bold text-rose-500 hover:bg-rose-50 rounded-lg">ออกจากระบบ</button>
-                    </div>
+                    <button onclick="logoutAdmin()" class="px-4 py-2 text-sm font-bold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">ออกจากระบบ</button>
                 </div>
 
                 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 class="font-bold text-slate-700"><i class="fa-solid fa-list-check mr-2"></i>รายการนักเรียนทั้งหมดในระบบ</h3>
-                        <span class="text-xs bg-sky-100 text-sky-700 px-3 py-1 rounded-full font-bold">LIVE DATA</span>
-                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
                                 <tr>
                                     <th class="px-6 py-4">ชื่อ-นามสกุล</th>
                                     <th class="px-6 py-4">ชั้น/ห้อง</th>
-                                    <th class="px-6 py-4">สถานะการแก้ไข</th>
+                                    <th class="px-6 py-4">เลขประจำตัวประชาชน</th>
                                     <th class="px-6 py-4 text-right">การจัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-table-body" class="divide-y divide-slate-50">
-                                <!-- Data will be loaded here -->
-                            </tbody>
+                            <tbody id="admin-table-body" class="divide-y divide-slate-50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -117,7 +109,7 @@
         </div>
     </main>
 
-    <!-- Edit Modal -->
+    <!-- Edit Modal (คงเดิม) -->
     <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -145,7 +137,7 @@
                     </div>
                 </div>
                 <div class="pt-6 flex gap-3">
-                    <button type="button" onclick="saveData()" class="flex-1 bg-sky-600 text-white py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">บันทึกข้อมูล</button>
+                    <button type="button" onclick="saveData()" id="saveBtn" class="flex-1 bg-sky-600 text-white py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">บันทึกข้อมูล</button>
                     <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200">ยกเลิก</button>
                 </div>
             </form>
@@ -154,7 +146,6 @@
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
-        let currentData = [];
         let isAdmin = false;
 
         function switchTab(id) {
@@ -162,42 +153,45 @@
             document.getElementById('tab-' + id).classList.add('active');
         }
 
-        // --- User Search Functions ---
+        // --- Improved Universal Search Function ---
         function searchData() {
-            const type = document.getElementById("searchType").value;
-            const input = document.getElementById("searchInput").value;
+            const input = document.getElementById("searchInput").value.trim();
             const display = document.getElementById("displayData");
             const resultsArea = document.getElementById("resultsArea");
             const loading = document.getElementById("loading");
 
-            if (!input.trim()) return alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
+            if (!input) return alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
 
             resultsArea.classList.remove('hidden');
             loading.classList.remove('hidden');
             display.innerHTML = "";
 
-            fetch(`${scriptURL}?searchType=${encodeURIComponent(type)}&searchValue=${encodeURIComponent(input)}`)
+            // ส่ง searchType เป็น "universal" เพื่อให้ฝั่ง GS เข้าใจว่าต้องหาทุกคอลัมน์
+            fetch(`${scriptURL}?searchType=universal&searchValue=${encodeURIComponent(input)}`)
                 .then(r => r.json())
                 .then(res => {
                     loading.classList.add('hidden');
                     if (res.status === "error") return display.innerHTML = `<div class="p-6 text-center text-rose-500">❌ ${res.message}</div>`;
-                    if (res.count === 0) return display.innerHTML = `<div class="p-10 text-center text-slate-400"><i class="fa-solid fa-face-frown text-4xl mb-2"></i><br>ไม่พบข้อมูลนักเรียน</div>`;
+                    if (res.count === 0) return display.innerHTML = `<div class="p-16 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200"><i class="fa-solid fa-face-frown text-5xl mb-4 opacity-20"></i><br><span class="text-lg">ไม่พบข้อมูลนักเรียน "${input}"</span></div>`;
 
                     res.data.forEach(st => {
                         display.innerHTML += `
-                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-sky-200 transition-all">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 bg-sky-50 rounded-full flex items-center justify-center text-sky-600 text-xl font-bold">
+                                    <div class="w-14 h-14 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-600 text-2xl font-bold shadow-sm">
                                         ${st['ชื่อ'] ? st['ชื่อ'].charAt(0) : '?'}
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-slate-800 text-lg">${st['คำนำหน้าชื่อ'] || ''}${st['ชื่อ']} ${st['นามสกุล']}</h4>
-                                        <p class="text-xs text-slate-400">รหัสประจำตัว: ${st['รหัสประจำตัวนักเรียน'] || '-'} | ชั้น ${st['ชั้น']}/${st['ห้อง']}</p>
+                                        <h4 class="font-bold text-slate-800 text-lg leading-tight">${st['คำนำหน้าชื่อ'] || ''}${st['ชื่อ']} ${st['นามสกุล']}</h4>
+                                        <p class="text-sm text-slate-500 mt-1">
+                                            <span class="bg-slate-100 px-2 py-0.5 rounded text-xs font-bold mr-1">ID: ${st['รหัสประจำตัวนักเรียน'] || '-'}</span> 
+                                            ชั้น ${st['ชั้น'] || '-'}/${st['ห้อง'] || '-'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 w-full md:w-auto">
                                     <button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['ชั้น']}', '${st['ห้อง']}')" 
-                                            class="flex-1 md:flex-none px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-sm font-bold hover:bg-sky-50 hover:text-sky-600 transition-colors">
+                                            class="flex-1 md:flex-none px-5 py-2.5 bg-sky-50 text-sky-600 rounded-xl text-sm font-bold hover:bg-sky-600 hover:text-white transition-all">
                                         <i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไขข้อมูล
                                     </button>
                                 </div>
@@ -207,14 +201,14 @@
                 })
                 .catch(e => {
                     loading.classList.add('hidden');
-                    alert("การเชื่อมต่อผิดพลาด");
+                    alert("การเชื่อมต่อผิดพลาด กรุณาลองใหม่อีกครั้ง");
                 });
         }
 
         // --- Admin Functions ---
         function checkAdmin() {
             const pass = document.getElementById("adminPass").value;
-            if (pass === "1234") { // รหัสผ่านจำลอง
+            if (pass === "1234") { 
                 isAdmin = true;
                 document.getElementById("admin-login").classList.add('hidden');
                 document.getElementById("admin-dashboard").classList.remove('hidden');
@@ -235,22 +229,19 @@
             const body = document.getElementById("admin-table-body");
             body.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400 animate-pulse">กำลังโหลดข้อมูลระบบ...</td></tr>`;
             
-            // ในที่นี้เราจะดึงข้อมูลมาแสดงเพื่อจัดการ (จำลองการดึงรายชื่อทั้งหมด)
             fetch(`${scriptURL}?action=getAll`)
                 .then(r => r.json())
                 .then(res => {
                     body.innerHTML = "";
-                    if (!res.data) return body.innerHTML = `<tr><td colspan="4" class="p-10 text-center">ไม่มีข้อมูล</td></tr>`;
+                    if (!res.data || res.data.length === 0) return body.innerHTML = `<tr><td colspan="4" class="p-10 text-center">ไม่มีข้อมูล</td></tr>`;
                     res.data.forEach(st => {
                         body.innerHTML += `
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
                                 <td class="px-6 py-4 text-slate-500">${st['ชั้น']}/${st['ห้อง']}</td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">ปกติ</span>
-                                </td>
+                                <td class="px-6 py-4 font-mono text-xs text-slate-400">${st['เลขประจำตัวประชาชน']}</td>
                                 <td class="px-6 py-4 text-right">
-                                    <button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['ชั้น']}', '${st['ห้อง']}')" class="text-sky-600 hover:text-sky-800 font-bold">แก้ไข</button>
+                                    <button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}', '${st['ชั้น']}', '${st['ห้อง']}')" class="text-sky-600 hover:text-sky-800 font-bold bg-sky-50 px-3 py-1 rounded-lg">แก้ไข</button>
                                 </td>
                             </tr>
                         `;
@@ -283,18 +274,18 @@
                 room: document.getElementById('edit-room').value
             };
 
-            const btn = event.target;
+            const btn = document.getElementById('saveBtn');
+            const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = "กำลังบันทึก...";
+            btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin mr-2'></i>กำลังบันทึก...";
 
-            // ส่งข้อมูลกลับไปที่ Google Apps Script
             fetch(scriptURL, {
                 method: 'POST',
-                mode: 'no-cors', // สำคัญสำหรับ Apps Script
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             }).then(() => {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว (การอัปเดตอาจใช้เวลาเล็กน้อย)");
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว");
                 closeEditModal();
                 if(isAdmin) loadAdminData();
                 else searchData();
@@ -302,7 +293,7 @@
                 alert("เกิดข้อผิดพลาดในการบันทึก");
             }).finally(() => {
                 btn.disabled = false;
-                btn.innerHTML = "บันทึกข้อมูล";
+                btn.innerHTML = originalText;
             });
         }
     </script>
