@@ -20,6 +20,17 @@
         .dot { transition: all 0.3s ease-in-out; }
         input:checked ~ .dot { transform: translateX(100%); background-color: #ffffff; }
         input:checked ~ .block { background-color: #0284c7; }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0284c7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -75,14 +86,14 @@
                             <h2 class="text-xl font-bold text-slate-800">จัดการข้อมูลนักเรียน</h2>
                             <p class="text-slate-500 text-sm">ตรวจสอบและแก้ไขข้อมูลทั้งหมดในฐานข้อมูล</p>
                         </div>
-                        <button onclick="location.reload()" class="px-6 py-2.5 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100 transition-colors">
+                        <button onclick="logoutAdmin()" class="px-6 py-2.5 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100 transition-colors">
                             <i class="fa-solid fa-power-off mr-2"></i>ออกจากระบบ
                         </button>
                     </div>
 
                     <!-- Toggle Edit Control -->
                     <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center space-y-3">
-                        <span class="text-sm font-bold text-slate-600 uppercase tracking-wider">สิทธิ์การแก้ไข (หน้าค้นหา)</span>
+                        <span class="text-sm font-bold text-slate-600 uppercase tracking-wider text-center">สิทธิ์การแก้ไข (หน้าค้นหา)</span>
                         <label for="toggleEdit" class="flex items-center cursor-pointer">
                             <div class="relative">
                                 <input type="checkbox" id="toggleEdit" class="sr-only" onchange="updateEditPermission(this.checked)">
@@ -98,7 +109,7 @@
                 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="p-6 border-b border-slate-50 flex justify-between items-center">
                         <h3 class="font-bold text-slate-800">รายชื่อนักเรียนทั้งหมด</h3>
-                        <div class="text-xs text-slate-400">แสดงผลข้อมูลล่าสุดจากระบบ</div>
+                        <div class="text-xs text-slate-400">สามารถแก้ไขข้อมูลได้ตลอดเวลาในหน้านี้</div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
@@ -117,6 +128,33 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Admin Edit Modal -->
+    <div id="adminEditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-gear mr-2 text-sky-600"></i>แก้ไขข้อมูล (Admin)</h3>
+                <button onclick="closeAdminEditModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="adminEditForm" class="p-8 space-y-6">
+                <input type="hidden" id="admin-edit-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">ชื่อ</label>
+                        <input type="text" id="admin-edit-name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase">นามสกุล</label>
+                        <input type="text" id="admin-edit-surname" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" id="btnAdminSave" onclick="adminSaveData()" class="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 shadow-lg active:scale-95 transition-all">บันทึกการเปลี่ยนแปลง</button>
+                    <button type="button" onclick="closeAdminEditModal()" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all">ยกเลิก</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -151,13 +189,16 @@
             } else { alert("รหัสผ่านไม่ถูกต้อง"); }
         }
 
-        // Function to update permission
+        function logoutAdmin() {
+            document.getElementById("admin-login").classList.remove('hidden');
+            document.getElementById("admin-dashboard").classList.add('hidden');
+            document.getElementById("adminPass").value = "";
+        }
+
+        // Function to update permission (for users in index.html)
         function updateEditPermission(isEnabled) {
             localStorage.setItem('allowUserEdit', isEnabled);
             updateStatusLabel(isEnabled);
-            
-            // Optional: You could also send this setting to your Google Sheet if you have a settings sheet
-            console.log("Edit permission set to:", isEnabled);
         }
 
         function updateStatusLabel(isEnabled) {
@@ -168,26 +209,70 @@
             }
         }
 
+        // Function for admin to open edit modal
+        function openAdminEdit(id, name, surname) {
+            document.getElementById('admin-edit-id').value = id;
+            document.getElementById('admin-edit-name').value = name;
+            document.getElementById('admin-edit-surname').value = surname;
+            document.getElementById('adminEditModal').classList.remove('hidden');
+        }
+
+        function closeAdminEditModal() {
+            document.getElementById('adminEditModal').classList.add('hidden');
+        }
+
+        function adminSaveData() {
+            const id = document.getElementById('admin-edit-id').value;
+            const name = document.getElementById('admin-edit-name').value;
+            const surname = document.getElementById('admin-edit-surname').value;
+            const btn = document.getElementById('btnAdminSave');
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="spinner"></div><span>กำลังบันทึก...</span></div>`;
+
+            // จำลองการส่งข้อมูล (ในหน้างานจริงต้องส่ง fetch แบบ POST ไปยัง Google Sheets)
+            setTimeout(() => {
+                alert(`แอดมินแก้ไขข้อมูลของ ${name} ${surname} สำเร็จแล้ว`);
+                btn.disabled = false;
+                btn.innerText = "บันทึกการเปลี่ยนแปลง";
+                closeAdminEditModal();
+                loadAdminData();
+            }, 1000);
+        }
+
         function loadAdminData() {
             const body = document.getElementById("admin-table-body");
-            body.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูล...</td></tr>`;
+            body.innerHTML = `<tr><td colspan="3" class="p-20 text-center"><div class="flex flex-col items-center gap-3"><div class="spinner border-t-sky-600"></div><span class="text-slate-400">กำลังดึงข้อมูลฐานข้อมูล...</span></div></td></tr>`;
+            
             fetch(`${scriptURL}?action=getAll`)
                 .then(r => r.json())
                 .then(res => {
                     body.innerHTML = "";
+                    if (!res.data || res.data.length === 0) {
+                        body.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-slate-400">ไม่พบข้อมูลในฐานข้อมูล</td></tr>`;
+                        return;
+                    }
+
                     res.data.forEach(st => {
                         body.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
-                                <td class="px-6 py-4 text-center text-slate-500">${st['ชั้น']}/${st['ห้อง']}</td>
-                                <td class="px-6 py-4 text-right pr-6">
-                                    <button class="bg-sky-50 text-sky-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-sky-100 transition-colors">
-                                        แก้ไขข้อมูล
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="px-6 py-5">
+                                    <div class="font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</div>
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-tighter">${st['เลขประจำตัวประชาชน']}</div>
+                                </td>
+                                <td class="px-6 py-5 text-center text-slate-500 font-medium">${st['ชั้น']}/${st['ห้อง']}</td>
+                                <td class="px-6 py-5 text-right pr-6">
+                                    <button onclick="openAdminEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}')" 
+                                            class="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-slate-700 transition-all active:scale-95 shadow-sm">
+                                        <i class="fa-solid fa-user-pen mr-2"></i>แก้ไข
                                     </button>
                                 </td>
                             </tr>
                         `;
                     });
+                })
+                .catch(err => {
+                    body.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-rose-500 font-bold">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
                 });
         }
     </script>
