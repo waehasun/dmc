@@ -3,70 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบฟอร์มบันทึกข้อมูล DMC</title>
+    <title>ระบบค้นหาข้อมูลนักเรียน DMC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="form-container">
-        <h2>📝 กรอกข้อมูล DMC</h2>
-        <p class="subtitle">กรุณากรอกข้อมูลของคุณให้ครบถ้วน</p>
-        
-        <form id="myForm">
-            <div class="input-group">
-                <label for="ชื่อ">ชื่อ</label>
-                <input type="text" id="ชื่อ" name="ชื่อ" placeholder="ระบุชื่อจริง" required>
-            </div>
-            
-            <div class="input-group">
-                <label for="นามสกุล">นามสกุล</label>
-                <input type="text" id="นามสกุล" name="นามสกุล" placeholder="ระบุนามสกุล" required>
-            </div>
-            
-            <div class="input-group">
-                <label for="เบอร์โทรศัพท์">เบอร์โทรศัพท์</label>
-                <input type="tel" id="เบอร์โทรศัพท์" name="เบอร์โทรศัพท์" placeholder="08X-XXX-XXXX" pattern="[0-9]{9,10}">
-            </div>
-            
-            <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
-        </form>
+    <nav class="navbar">
+        <div class="navbar-title">🏫 ระบบข้อมูลนักเรียน (DMC)</div>
+        <button class="btn-manage" onclick="goToManagePage()">⚙️ จัดการข้อมูล</button>
+    </nav>
 
-        <p id="message"></p>
+    <div class="search-container">
+        <h2>🔍 ค้นหาข้อมูลนักเรียน</h2>
+        <div class="search-box">
+            <select id="searchType">
+                <option value="เลขประจำตัวประชาชน">เลขประจำตัวประชาชน</option>
+                <option value="รหัสประจำตัวนักเรียน">เลขประจำตัวนักเรียน</option>
+                <option value="ชื่อ">ชื่อ</option>
+                <option value="นามสกุล">นามสกุล</option>
+            </select>
+            
+            <input type="text" id="searchInput" placeholder="พิมพ์ข้อมูลที่ต้องการค้นหา...">
+            
+            <button class="btn-search" onclick="searchData()">ค้นหา</button>
+        </div>
+    </div>
+
+    <div class="results-area" id="resultsArea">
+        <p id="loadingText" style="text-align: center; color: #7f8c8d;">กำลังค้นหาข้อมูล...</p>
+        <div id="displayData"></div>
     </div>
 
     <script>
-        // 🚨 อย่าลืมใส่ URL ของคุณตรงนี้นะครับ 🚨
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec'; 
-        
-        const form = document.getElementById('myForm');
-        const btn = document.getElementById('submitBtn');
-        const message = document.getElementById('message');
+        // ================= สคริปต์การทำงาน (JavaScript) =================
 
-        form.addEventListener('submit', e => {
-            e.preventDefault(); 
-            btn.disabled = true;
-            btn.innerHTML = 'กำลังบันทึกข้อมูล... ⏳';
-            message.innerHTML = "";
+        // 1. ฟังก์ชันเมื่อกดปุ่มค้นหา
+        function searchData() {
+            const searchType = document.getElementById("searchType").value;
+            const searchInput = document.getElementById("searchInput").value;
+            const resultsArea = document.getElementById("resultsArea");
 
-            const data = new URLSearchParams(new FormData(form));
+            if (searchInput.trim() === "") {
+                alert("กรุณากรอกข้อมูลที่ต้องการค้นหา");
+                return;
+            }
 
-            fetch(scriptURL, { method: 'POST', body: data, mode: 'no-cors'})
-                .then(response => {
-                    message.innerHTML = "✅ บันทึกข้อมูลสำเร็จแล้ว!";
-                    message.className = "success-text";
-                    form.reset(); 
-                    btn.disabled = false;
-                    btn.innerHTML = 'บันทึกข้อมูลใหม่';
-                })
-                .catch(error => {
-                    console.error('Error!', error.message);
-                    message.innerHTML = "❌ เกิดข้อผิดพลาดในการบันทึก";
-                    message.className = "error-text";
-                    btn.disabled = false;
-                    btn.innerHTML = 'ลองใหม่อีกครั้ง';
-                });
-        });
+            // แสดงกล่องผลลัพธ์
+            resultsArea.style.display = "block";
+            document.getElementById("loadingText").innerHTML = `กำลังค้นหา "${searchInput}" จาก ${searchType}... ⏳`;
+            
+            // 📍 ตรงนี้เดี๋ยวเราจะมาเขียนโค้ด fetch() ไปยัง Google Apps Script (doGet) เพื่อดึงข้อมูลมาแสดงครับ
+        }
+
+        // 2. ฟังก์ชันไปหน้าจัดการข้อมูล (เตรียมรอไว้)
+        function goToManagePage() {
+            alert("เดี๋ยวจะพาไปหน้าจัดการข้อมูล (รอกำหนดรายละเอียดครับ)");
+        }
     </script>
+
 </body>
 </html>
