@@ -36,7 +36,7 @@
             btn.innerHTML = 'กำลังบันทึก...';
 
             // ส่งข้อมูลผ่าน Fetch API ไปยัง Google Apps Script
-            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+            fetch(scriptURL, { method: 'POST', body: new FormData(form), mode: 'no-cors'})
                 .then(response => {
                     message.innerHTML = "บันทึกข้อมูลสำเร็จแล้ว!";
                     message.style.color = "green";
