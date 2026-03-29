@@ -67,7 +67,12 @@
                 <!-- Header Section -->
                 <div class="text-center py-6">
                     <h1 class="text-3xl font-bold text-slate-800 mb-2">ระบบค้นหาข้อมูลนักเรียน</h1>
-                    <p class="text-slate-500">กรุณากรอกชื่อ นามสกุล หรือเลขบัตรประชาชนเพื่อค้นหา</p>
+                    <p class="text-slate-500">กรุณากรอกชื่อ นามสกุล หรือเลขประจำตัวประชาชนเพื่อค้นหา</p>
+                    
+                    <!-- แสดงสถานะการแก้ไขปัจจุบัน -->
+                    <div id="permissionStatus" class="mt-4 inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold">
+                        <!-- จะถูกเติมด้วย JavaScript -->
+                    </div>
                 </div>
 
                 <!-- Search Box -->
@@ -77,7 +82,7 @@
                     </div>
                     <input type="text" id="searchInput" 
                            onkeyup="if(event.key === 'Enter') searchData()" 
-                           placeholder="พิมพ์ข้อมูลเพื่อค้นหา..." 
+                           placeholder="พิมพ์ชื่อหรือนามสกุล..." 
                            class="w-full bg-white border border-slate-200 rounded-3xl pl-14 pr-36 py-6 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all text-xl shadow-sm">
                     <button onclick="searchData()" 
                             class="absolute right-4 top-4 bottom-4 bg-sky-600 text-white px-8 rounded-2xl font-bold hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-sky-600/20">
@@ -86,18 +91,21 @@
                 </div>
 
                 <!-- Status Banner (แจ้งเตือนหากปิดการแก้ไข) -->
-                <div id="editDisabledBanner" class="hidden bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center gap-3 text-amber-700 text-sm">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <span>ขณะนี้ระบบปิดการแก้ไขข้อมูลชั่วคราวโดยแอดมิน ท่านสามารถอ่านข้อมูลได้เพียงอย่างเดียว</span>
+                <div id="editDisabledBanner" class="hidden bg-amber-50 border border-amber-200 p-5 rounded-3xl flex items-start gap-4 text-amber-800">
+                    <div class="mt-1"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+                    <div>
+                        <p class="font-bold text-lg">โหมดอ่านอย่างเดียว</p>
+                        <p class="text-sm opacity-80">แอดมินปิดการแก้ไขข้อมูลในขณะนี้ คุณสามารถค้นหาและดูข้อมูลได้ แต่ไม่สามารถเปลี่ยนแปลงข้อมูลได้</p>
+                    </div>
                 </div>
 
                 <!-- Results Display Area -->
                 <div id="resultsArea" class="hidden space-y-4">
                     <div id="loading" class="hidden flex flex-col items-center py-12">
                         <div class="spinner mb-4"></div>
-                        <p class="text-slate-400">กำลังดึงข้อมูลจากระบบ...</p>
+                        <p class="text-slate-400">กำลังค้นหาข้อมูล...</p>
                     </div>
-                    <div id="displayData" class="grid grid-cols-1 gap-4"></div>
+                    <div id="displayData" class="grid grid-cols-1 gap-4 pb-12"></div>
                 </div>
             </div>
         </main>
@@ -115,16 +123,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-400 uppercase">ชื่อ</label>
-                        <input type="text" id="edit-name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:bg-white transition-all">
+                        <input type="text" id="edit-name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-400 uppercase">นามสกุล</label>
-                        <input type="text" id="edit-surname" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:bg-white transition-all">
+                        <input type="text" id="edit-surname" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-sky-500 focus:bg-white transition-all shadow-sm">
                     </div>
                 </div>
-                <div class="flex gap-4">
-                    <button type="button" onclick="saveData()" class="flex-1 bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 shadow-lg">บันทึก</button>
-                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold">ยกเลิก</button>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="saveData()" class="flex-[2] bg-sky-600 text-white py-4 rounded-2xl font-bold hover:bg-sky-700 shadow-lg shadow-sky-600/20 active:scale-95 transition-all">บันทึกข้อมูล</button>
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all">ยกเลิก</button>
                 </div>
             </form>
         </div>
@@ -133,9 +141,24 @@
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
 
-        // ตรวจสอบสถานะการแก้ไขเบื้องต้น
+        // ตรวจสอบสถานะและอัปเดต UI ทันทีที่โหลดหน้า
+        window.onload = updateUIPermission;
+
         function checkEditPermission() {
             return localStorage.getItem('allowUserEdit') === 'true';
+        }
+
+        function updateUIPermission() {
+            const statusDiv = document.getElementById('permissionStatus');
+            const canEdit = checkEditPermission();
+            
+            if (canEdit) {
+                statusDiv.innerHTML = '<i class="fa-solid fa-lock-open mr-2"></i> ระบบเปิดให้แก้ไขข้อมูลได้';
+                statusDiv.className = 'mt-4 inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100';
+            } else {
+                statusDiv.innerHTML = '<i class="fa-solid fa-lock mr-2"></i> ระบบปิดการแก้ไข (อ่านอย่างเดียว)';
+                statusDiv.className = 'mt-4 inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100';
+            }
         }
 
         function toggleSidebar() {
@@ -161,7 +184,6 @@
             loading.classList.remove('hidden');
             display.innerHTML = "";
             
-            // แสดง/ซ่อน Banner ตามสิทธิ์ที่แอดมินตั้งไว้
             const canEdit = checkEditPermission();
             banner.classList.toggle('hidden', canEdit);
 
@@ -170,43 +192,45 @@
                 .then(res => {
                     loading.classList.add('hidden');
                     if (res.count === 0) {
-                        display.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400">ไม่พบข้อมูล</div>`;
+                        display.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400">ไม่พบข้อมูลนักเรียน</div>`;
                         return;
                     }
 
                     res.data.forEach(st => {
-                        // ตรวจสอบว่าจะแสดงปุ่มแก้ไขหรือไม่
-                        const editButtonHtml = canEdit 
+                        const editBtn = canEdit 
                             ? `<button onclick="openEdit('${st['เลขประจำตัวประชาชน']}', '${st['ชื่อ']}', '${st['นามสกุล']}')" 
-                                       class="px-4 py-2 bg-sky-50 text-sky-600 rounded-xl text-sm font-bold hover:bg-sky-100 transition-all">
-                                   แก้ไขข้อมูล
+                                       class="px-5 py-2.5 bg-sky-600 text-white rounded-xl text-sm font-bold hover:bg-sky-700 transition-all shadow-md shadow-sky-600/10">
+                                   <i class="fa-solid fa-pen-to-square mr-2"></i>แก้ไข
                                </button>`
-                            : `<span class="text-xs text-slate-300 italic">ปิดการแก้ไข</span>`;
+                            : `<span class="bg-slate-100 text-slate-400 px-4 py-2 rounded-xl text-xs font-medium uppercase tracking-wider">Read Only</span>`;
 
                         display.innerHTML += `
-                            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all">
+                            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-md hover:border-sky-100 transition-all group">
                                 <div class="flex items-center gap-5">
-                                    <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400"><i class="fa-solid fa-user-graduate text-2xl"></i></div>
+                                    <div class="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-sky-50 group-hover:text-sky-500 transition-colors">
+                                        <i class="fa-solid fa-user-graduate text-3xl"></i>
+                                    </div>
                                     <div>
-                                        <h3 class="font-bold text-slate-800 text-lg">${st['ชื่อ']} ${st['นามสกุล']}</h3>
-                                        <div class="flex gap-3 text-xs text-slate-500 mt-1">
-                                            <span><i class="fa-solid fa-school-flag mr-1"></i>ชั้น ${st['ชั้น']}/${st['ห้อง']}</span>
-                                            <span><i class="fa-solid fa-id-card-clip mr-1"></i>${st['รหัสประจำตัวนักเรียน']}</span>
+                                        <h3 class="font-bold text-slate-800 text-xl">${st['ชื่อ']} ${st['นามสกุล']}</h3>
+                                        <div class="flex flex-wrap gap-4 text-sm text-slate-500 mt-1">
+                                            <span class="flex items-center"><i class="fa-solid fa-school-flag mr-2 text-slate-300"></i>ชั้น ${st['ชั้น']}/${st['ห้อง']}</span>
+                                            <span class="flex items-center"><i class="fa-solid fa-id-card-clip mr-2 text-slate-300"></i>${st['รหัสประจำตัวนักเรียน']}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div>${editButtonHtml}</div>
+                                <div class="flex flex-col items-end gap-2">
+                                    ${editBtn}
+                                </div>
                             </div>
                         `;
                     });
                 })
                 .catch(() => {
                     loading.classList.add('hidden');
-                    alert("การเชื่อมต่อมีปัญหา กรุณาลองใหม่");
+                    alert("การเชื่อมต่อมีปัญหา กรุณาลองใหม่อีกครั้ง");
                 });
         }
 
-        // Logic สำหรับการแก้ไข
         function openEdit(id, name, surname) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = name;
@@ -219,8 +243,12 @@
         }
 
         function saveData() {
-            // โค้ดส่งข้อมูลไป Google Sheets (ตามความต้องการเดิม)
-            alert("บันทึกข้อมูลเรียบร้อย (ตัวอย่าง)");
+            const id = document.getElementById('edit-id').value;
+            const name = document.getElementById('edit-name').value;
+            const surname = document.getElementById('edit-surname').value;
+            
+            // ตัวอย่างจำลองการบันทึก
+            alert(`กำลังบันทึกข้อมูลของ ${name} ${surname} (ฟีเจอร์นี้ต้องเชื่อมต่อกับ Google Apps Script)`);
             closeEditModal();
             searchData();
         }
