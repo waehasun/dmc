@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMC SNR - Teacher Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100">
+            <i class="fa-solid fa-graduation-cap text-2xl text-sky-600 mr-3"></i>
+            <span class="font-bold text-xl text-slate-800">DMC SNR</span>
+        </div>
+        <nav class="flex-1 py-6 px-3 space-y-2">
+            <a href="index.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-chart-line w-6"></i><span class="ml-3">Dashboard</span>
+            </a>
+            <a href="teacher.html" class="flex items-center px-4 py-3 active-menu font-medium text-sky-600">
+                <i class="fa-solid fa-chalkboard-user w-6"></i><span class="ml-3">สำหรับครูที่ปรึกษา</span>
+            </a>
+            <a href="student.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-user-pen w-6"></i><span class="ml-3">สำหรับนักเรียน</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-400 uppercase">ระบบจัดการ</div>
+            <a href="admin.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-lock w-6"></i><span class="ml-3">Admin Panel</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto">
+        <main class="p-6 md:p-10 max-w-7xl mx-auto w-full">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">ระบบจัดการข้อมูลรายห้อง</h1>
+                    <p class="text-slate-500">เลือกชั้นและห้องเรียนเพื่อดูข้อมูลและอัปเดตน้ำหนัก-ส่วนสูง</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-8 flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">ระดับชั้น</label>
+                    <select id="filterLevel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                        <option value="">เลือกชั้น</option>
+                        <option value="ม.1">ม.1</option><option value="ม.2">ม.2</option><option value="ม.3">ม.3</option>
+                        <option value="ม.4">ม.4</option><option value="ม.5">ม.5</option><option value="ม.6">ม.6</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">ห้อง</label>
+                    <select id="filterRoom" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                        <option value="">เลือกห้อง</option>
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                        <option value="4">4</option><option value="5">5</option><option value="10">10</option>
+                    </select>
+                </div>
+                <button onclick="filterData()" class="bg-sky-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all h-[52px]">แสดงข้อมูล</button>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase">ชื่อ-นามสกุล</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">น้ำหนัก (กก.)</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">ส่วนสูง (ซม.)</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">บันทึก</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-50">
+                            <tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 italic">กรุณาเลือกชั้นและห้องที่ต้องการ</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 right-10 bg-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 transition-all z-[100] font-bold"></div>
+
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
+        let allStudents = [];
+
+        window.onload = async () => {
+            const response = await fetch(`${scriptURL}?action=getAll`);
+            const res = await response.json();
+            allStudents = res.data || [];
+        };
+
+        function showToast(msg, success = true) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.backgroundColor = success ? '#10b981' : '#f43f5e';
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 3000);
+        }
+
+        function filterData() {
+            const lv = document.getElementById('filterLevel').value;
+            const rm = document.getElementById('filterRoom').value;
+            const body = document.getElementById('tableBody');
+            
+            if(!lv || !rm) { showToast("กรุณาเลือกให้ครบ", false); return; }
+            
+            const list = allStudents.filter(s => s['ชั้น'] == lv && s['ห้อง'] == rm);
+            body.innerHTML = list.length ? "" : '<tr><td colspan="4" class="px-6 py-10 text-center">ไม่พบนักเรียนในห้องนี้</td></tr>';
+            
+            list.forEach(st => {
+                body.innerHTML += `
+                    <tr>
+                        <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
+                        <td class="px-6 py-4 text-center">
+                            <input type="number" id="w-${st['เลขประจำตัวประชาชน']}" value="${st['น้ำหนัก'] || 0}" class="w-20 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-center">
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <input type="number" id="h-${st['เลขประจำตัวประชาชน']}" value="${st['ส่วนสูง'] || 0}" class="w-20 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-center">
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="saveHealth('${st['เลขประจำตัวประชาชน']}')" class="text-sky-600 hover:text-sky-800 font-bold"><i class="fa-solid fa-floppy-disk"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function saveHealth(id) {
+            const w = document.getElementById(`w-${id}`).value;
+            const h = document.getElementById(`h-${id}`).value;
+            showToast("กำลังบันทึก...");
+            try {
+                await fetch(`${scriptURL}?action=update&id=${id}&weight=${w}&height=${h}`);
+                showToast("บันทึกสำเร็จ!");
+            } catch(e) { showToast("เกิดข้อผิดพลาด", false); }
+        }
+    </script>
+</body>
+</html>
