@@ -3,260 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DMC SNR - Dashboard & Search</title>
+    <title>DMC SNR - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-        #sidebar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .sidebar-collapsed { width: 80px; }
-        .sidebar-expanded { width: 260px; }
-        .menu-text { transition: opacity 0.2s; }
-        .collapsed .menu-text { opacity: 0; display: none; }
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
         .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
-        
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #0284c7;
-            border-radius: 50%; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         .card-stat { transition: transform 0.2s; }
         .card-stat:hover { transform: translateY(-4px); }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar-expanded bg-white border-r border-slate-200 flex flex-col z-50">
-        <div class="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
-            <i class="fa-solid fa-graduation-cap text-2xl text-sky-600 mr-4"></i>
-            <span class="menu-text font-bold text-xl text-slate-800 whitespace-nowrap">DMC SNR</span>
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100">
+            <i class="fa-solid fa-graduation-cap text-2xl text-sky-600 mr-3"></i>
+            <span class="font-bold text-xl text-slate-800">DMC SNR</span>
         </div>
-
         <nav class="flex-1 py-6 px-3 space-y-2">
-            <a href="index.html" class="flex items-center px-4 py-3 active-menu font-medium transition-all group">
-                <i class="fa-solid fa-chart-line w-6 text-lg"></i>
-                <span class="menu-text ml-3">Dashboard</span>
+            <a href="index.html" class="flex items-center px-4 py-3 active-menu font-medium text-sky-600">
+                <i class="fa-solid fa-chart-line w-6"></i><span class="ml-3">Dashboard</span>
             </a>
-            <a href="admin.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-sky-600 rounded-xl transition-all group">
-                <i class="fa-solid fa-lock w-6 text-lg"></i>
-                <span class="menu-text ml-3">ส่วนแอดมิน</span>
+            <a href="teacher.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-chalkboard-user w-6"></i><span class="ml-3">สำหรับครูที่ปรึกษา</span>
+            </a>
+            <a href="student.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-user-pen w-6"></i><span class="ml-3">สำหรับนักเรียน</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-400 uppercase">ระบบจัดการ</div>
+            <a href="admin.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-lock w-6"></i><span class="ml-3">Admin Panel</span>
             </a>
         </nav>
-
-        <div class="p-3 border-t border-slate-100">
-            <button onclick="toggleSidebar()" class="w-full flex items-center px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all">
-                <i id="toggle-icon" class="fa-solid fa-angles-left w-6 text-lg"></i>
-                <span class="menu-text ml-3">ซ่อนเมนู</span>
-            </button>
-        </div>
     </aside>
 
-    <div class="flex-1 flex flex-col min-w-0 bg-slate-50">
-        <header class="h-16 flex items-center px-6 bg-white border-b border-slate-200 md:hidden">
-            <button onclick="toggleSidebar()" class="text-slate-500 text-xl"><i class="fa-solid fa-bars"></i></button>
-            <span class="ml-4 font-bold text-slate-800">DMC Dashboard</span>
-        </header>
-
-        <main class="flex-1 overflow-y-auto p-4 md:p-8">
-            <div class="max-w-6xl mx-auto space-y-8 pb-20">
-                
-                <!-- Dashboard Section -->
-                <div id="dashboard-summary">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-slate-800">ภาพรวมข้อมูลนักเรียน</h2>
-                        <button onclick="fetchDashboardData()" class="text-sky-600 hover:text-sky-700 text-sm font-bold">
-                            <i class="fa-solid fa-rotate mr-1"></i> อัปเดตข้อมูล
-                        </button>
-                    </div>
-
-                    <!-- Stat Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="card-stat bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <div class="text-slate-400 text-xs font-bold uppercase mb-2">นักเรียนทั้งหมด</div>
-                            <div class="text-3xl font-bold text-slate-800" id="stat-total">-</div>
-                            <div class="text-emerald-500 text-xs mt-2"><i class="fa-solid fa-user-group mr-1"></i> คน</div>
-                        </div>
-                        <div class="card-stat bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <div class="text-slate-400 text-xs font-bold uppercase mb-2">ชาย / หญิง</div>
-                            <div class="text-2xl font-bold text-slate-800" id="stat-gender">- / -</div>
-                            <div class="text-sky-500 text-xs mt-2"><i class="fa-solid fa-venus-mars mr-1"></i> อัตราส่วนเพศ</div>
-                        </div>
-                        <div class="card-stat bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <div class="text-slate-400 text-xs font-bold uppercase mb-2">นร. ยากจน</div>
-                            <div class="text-3xl font-bold text-rose-500" id="stat-disadvantaged">-</div>
-                            <div class="text-rose-400 text-xs mt-2"><i class="fa-solid fa-hand-holding-heart mr-1"></i> ต้องการความช่วยเหลือ</div>
-                        </div>
-                        <div class="card-stat bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <div class="text-slate-400 text-xs font-bold uppercase mb-2">เฉลี่ยส่วนสูง</div>
-                            <div class="text-3xl font-bold text-slate-800" id="stat-height">-</div>
-                            <div class="text-amber-500 text-xs mt-2"><i class="fa-solid fa-ruler mr-1"></i> เซนติเมตร</div>
-                        </div>
-                    </div>
-
-                    <!-- Charts Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <h3 class="font-bold text-slate-700 mb-6 text-center">สถิติจำนวนนักเรียนแยกตามชั้นเรียน</h3>
-                            <div class="h-64"><canvas id="levelChart"></canvas></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                            <h3 class="font-bold text-slate-700 mb-6 text-center">สัดส่วนผู้นับถือศาสนา</h3>
-                            <div class="h-64 flex justify-center"><canvas id="religionChart"></canvas></div>
-                        </div>
-                    </div>
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto">
+        <main class="p-6 md:p-10 max-w-7xl mx-auto w-full">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">ระบบบริหารจัดการข้อมูลนักเรียน</h1>
+                    <p class="text-slate-500">ภาพรวมสถิตินักเรียนโรงเรียนคณะราษฎรบำรุง จังหวัดยะลา</p>
                 </div>
+                <button onclick="location.reload()" class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 shadow-sm hover:bg-slate-50">
+                    <i class="fa-solid fa-arrows-rotate mr-2"></i>รีเฟรชข้อมูล
+                </button>
+            </div>
 
-                <hr class="border-slate-200">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div class="card-stat bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-2">นักเรียนทั้งหมด</p>
+                    <h3 class="text-3xl font-bold text-slate-800" id="stat-total">0</h3>
+                </div>
+                <div class="card-stat bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-2">ชาย / หญิง</p>
+                    <h3 class="text-3xl font-bold text-slate-800" id="stat-gender">0 / 0</h3>
+                </div>
+                <div class="card-stat bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-2">นักเรียนยากจน</p>
+                    <h3 class="text-3xl font-bold text-rose-500" id="stat-disadvantaged">0</h3>
+                </div>
+                <div class="card-stat bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-2">เฉลี่ยส่วนสูง</p>
+                    <h3 class="text-3xl font-bold text-sky-600" id="stat-height">0</h3>
+                </div>
+            </div>
 
-                <!-- Search Section -->
-                <div class="space-y-6">
-                    <div class="text-center">
-                        <h2 class="text-2xl font-bold text-slate-800">ค้นหารายบุคคล</h2>
-                    </div>
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                    <h4 class="font-bold text-slate-700 mb-6">สถิติแยกตามระดับชั้น</h4>
+                    <div class="h-64"><canvas id="levelChart"></canvas></div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                    <h4 class="font-bold text-slate-700 mb-6">สัดส่วนผู้นับถือศาสนา</h4>
+                    <div class="h-64 flex justify-center"><canvas id="religionChart"></canvas></div>
+                </div>
+            </div>
 
-                    <div class="relative group max-w-2xl mx-auto">
-                        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </div>
-                        <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') searchData()" 
-                               placeholder="ค้นหาชื่อ, นามสกุล หรือเลขบัตร..." 
-                               class="w-full bg-white border border-slate-200 rounded-3xl pl-12 pr-32 py-5 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all shadow-sm">
-                        <button onclick="searchData()" class="absolute right-3 top-3 bottom-3 bg-sky-600 text-white px-6 rounded-2xl font-bold hover:bg-sky-700 transition-all">ค้นหา</button>
-                    </div>
-
-                    <div id="resultsArea" class="hidden max-w-4xl mx-auto">
-                        <div id="loading" class="hidden flex flex-col items-center py-10">
-                            <div class="spinner mb-4"></div>
-                            <p class="text-slate-400">กำลังค้นหา...</p>
-                        </div>
-                        <div id="displayData" class="grid grid-cols-1 gap-4"></div>
-                    </div>
+            <!-- Search Area -->
+            <div class="max-w-2xl mx-auto space-y-6">
+                <h3 class="text-xl font-bold text-slate-800 text-center">ค้นหารายบุคคล</h3>
+                <div class="relative group">
+                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') searchData()" 
+                           placeholder="พิมพ์ชื่อ นามสกุล หรือเลขบัตรประชาชน..." 
+                           class="w-full bg-white border border-slate-200 rounded-full pl-14 pr-32 py-5 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 transition-all shadow-sm">
+                    <button onclick="searchData()" class="absolute right-3 top-3 bottom-3 bg-sky-600 text-white px-8 rounded-full font-bold hover:bg-sky-700 transition-all">ค้นหา</button>
+                </div>
+                <div id="resultsArea" class="hidden">
+                    <div id="displayData" class="grid grid-cols-1 gap-4"></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Student Detail Modal -->
-    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            <!-- Modal Header -->
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3">
-                    <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center">
-                        <i class="fa-solid fa-address-card"></i>
-                    </div>
-                    รายละเอียดข้อมูลนักเรียน
-                </h3>
-                <button onclick="closeDetailModal()" class="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 transition-all flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
-            </div>
-            
-            <!-- Modal Body (Scrollable) -->
-            <div class="p-8 overflow-y-auto space-y-8" id="detailContent">
-                <!-- Content will be injected here -->
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
-                <button onclick="closeDetailModal()" class="px-8 py-3 bg-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-300 transition-all">ปิดหน้าต่าง</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
+        let allStudents = [];
         let levelChartInstance, religionChartInstance;
-        let searchResults = [];
 
-        window.onload = () => {
-            fetchDashboardData();
+        window.onload = async () => {
+            try {
+                const response = await fetch(`${scriptURL}?action=getAll`);
+                const res = await response.json();
+                allStudents = res.data || [];
+                updateUI();
+            } catch (e) { console.error(e); }
         };
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('sidebar-expanded');
-            sidebar.classList.toggle('sidebar-collapsed');
-            sidebar.classList.toggle('collapsed');
-        }
-
-        async function fetchDashboardData() {
-            try {
-                const response = await fetch(`${scriptURL}?action=getAll&t=${new Date().getTime()}`);
-                const res = await response.json();
-                if (res.data) {
-                    processDashboard(res.data);
-                }
-            } catch (error) {
-                console.error("Dashboard error:", error);
-            }
-        }
-
-        function processDashboard(data) {
-            const total = data.length;
-            const male = data.filter(d => d['เพศ'] === 'ช' || d['คำนำหน้าชื่อ']?.includes('เด็กชาย') || d['คำนำหน้าชื่อ']?.includes('นาย')).length;
-            const female = total - male;
-            const disadvantaged = data.filter(d => d['ความด้อยโอกาส'] && d['ความด้อยโอกาส'] !== '-' && d['ความด้อยโอกาส'] !== '').length;
+        function updateUI() {
+            const total = allStudents.length;
+            const male = allStudents.filter(d => d['เพศ'] === 'ช' || d['คำนำหน้าชื่อ']?.includes('เด็กชาย')).length;
+            const disadvantaged = allStudents.filter(d => d['ความด้อยโอกาส'] && d['ความด้อยโอกาส'] !== '-' && d['ความด้อยโอกาส'] !== '').length;
             
-            let sumHeight = 0, countHeight = 0;
+            let sumH = 0, countH = 0;
             const levels = {};
             const religions = {};
 
-            data.forEach(st => {
-                if(st['ส่วนสูง']) { sumHeight += parseFloat(st['ส่วนสูง']); countHeight++; }
-                const lv = st['ชั้น'] || 'ไม่ระบุ';
-                levels[lv] = (levels[lv] || 0) + 1;
-                const rel = st['ศาสนา'] || 'ไม่ระบุ';
-                religions[rel] = (religions[rel] || 0) + 1;
+            allStudents.forEach(st => {
+                if(st['ส่วนสูง']) { sumH += parseFloat(st['ส่วนสูง']); countH++; }
+                levels[st['ชั้น']] = (levels[st['ชั้น']] || 0) + 1;
+                religions[st['ศาสนา']] = (religions[st['ศาสนา']] || 0) + 1;
             });
 
             document.getElementById('stat-total').innerText = total.toLocaleString();
-            document.getElementById('stat-gender').innerText = `${male} / ${female}`;
+            document.getElementById('stat-gender').innerText = `${male} / ${total - male}`;
             document.getElementById('stat-disadvantaged').innerText = disadvantaged;
-            document.getElementById('stat-height').innerText = countHeight > 0 ? (sumHeight/countHeight).toFixed(1) : '-';
+            document.getElementById('stat-height').innerText = countH > 0 ? (sumH/countH).toFixed(1) + ' ซม.' : '-';
 
             renderCharts(levels, religions);
         }
 
         function renderCharts(levelData, religionData) {
-            if (levelChartInstance) levelChartInstance.destroy();
-            if (religionChartInstance) religionChartInstance.destroy();
-
-            const ctxLevel = document.getElementById('levelChart').getContext('2d');
-            levelChartInstance = new Chart(ctxLevel, {
+            const ctxL = document.getElementById('levelChart').getContext('2d');
+            levelChartInstance = new Chart(ctxL, {
                 type: 'bar',
-                data: {
-                    labels: Object.keys(levelData),
-                    datasets: [{
-                        label: 'จำนวนนักเรียน',
-                        data: Object.values(levelData),
-                        backgroundColor: '#0ea5e9',
-                        borderRadius: 8
-                    }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                data: { labels: Object.keys(levelData), datasets: [{ label: 'คน', data: Object.values(levelData), backgroundColor: '#0ea5e9', borderRadius: 10 }] },
+                options: { maintainAspectRatio: false }
             });
 
-            const ctxRel = document.getElementById('religionChart').getContext('2d');
-            religionChartInstance = new Chart(ctxRel, {
+            const ctxR = document.getElementById('religionChart').getContext('2d');
+            religionChartInstance = new Chart(ctxR, {
                 type: 'doughnut',
-                data: {
-                    labels: Object.keys(religionData),
-                    datasets: [{
-                        data: Object.values(religionData),
-                        backgroundColor: ['#0284c7', '#f43f5e', '#10b981', '#f59e0b']
-                    }]
-                },
+                data: { labels: Object.keys(religionData), datasets: [{ data: Object.values(religionData), backgroundColor: ['#0284c7', '#f43f5e', '#10b981', '#f59e0b'] }] },
                 options: { maintainAspectRatio: false, cutout: '70%' }
             });
         }
@@ -264,179 +157,24 @@
         function searchData() {
             const input = document.getElementById("searchInput").value.trim();
             const display = document.getElementById("displayData");
-            const resultsArea = document.getElementById("resultsArea");
-            const loading = document.getElementById("loading");
-
             if (!input) return;
-            resultsArea.classList.remove('hidden');
-            loading.classList.remove('hidden');
-            display.innerHTML = "";
+            document.getElementById("resultsArea").classList.remove('hidden');
             
-            fetch(`${scriptURL}?searchValue=${encodeURIComponent(input)}`)
-                .then(r => r.json())
-                .then(res => {
-                    loading.classList.add('hidden');
-                    searchResults = res.data || [];
-                    if (res.count === 0) {
-                        display.innerHTML = `<div class="text-center py-10 text-slate-400">ไม่พบข้อมูล</div>`;
-                        return;
-                    }
-                    res.data.forEach((st, index) => {
-                        display.innerHTML += `
-                            <div onclick="showDetails(${index})" class="group bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between cursor-pointer hover:border-sky-500 hover:shadow-lg transition-all active:scale-[0.99]">
-                                <div class="flex items-center gap-5">
-                                    <div class="w-14 h-14 bg-slate-50 text-slate-400 group-hover:bg-sky-50 group-hover:text-sky-600 rounded-2xl flex items-center justify-center transition-colors">
-                                        <i class="fa-solid fa-user text-xl"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-slate-800 text-lg">${st['ชื่อ']} ${st['นามสกุล']}</div>
-                                        <div class="flex gap-2 text-xs font-medium mt-1">
-                                            <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded-md">ชั้น ${st['ชั้น']}/${st['ห้อง']}</span>
-                                            <span class="px-2 py-1 bg-sky-50 text-sky-600 rounded-md">ID: ${st['เลขประจำตัวประชาชน'].substring(0,5)}...</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-slate-300 group-hover:text-sky-600 transition-colors">
-                                    <i class="fa-solid fa-chevron-right text-xl"></i>
-                                </div>
-                            </div>
-                        `;
-                    });
-                })
-                .catch(() => loading.classList.add('hidden'));
-        }
-
-        function showDetails(index) {
-            const st = searchResults[index];
-            if (!st) return;
-
-            const content = document.getElementById('detailContent');
-            content.innerHTML = `
-                <!-- Basic Info Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-1 flex flex-col items-center justify-center bg-sky-50 rounded-3xl p-8 border border-sky-100">
-                        <div class="w-24 h-24 bg-white text-sky-600 rounded-3xl flex items-center justify-center text-4xl shadow-sm mb-4">
-                            <i class="fa-solid fa-user-graduate"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-800 text-xl text-center">${st['ชื่อ']} ${st['นามสกุล']}</h4>
-                        <p class="text-sky-600 font-medium mt-1">ม.${st['ชั้น']}/${st['ห้อง']}</p>
-                    </div>
-                    
-                    <div class="md:col-span-2 grid grid-cols-2 gap-x-8 gap-y-4 bg-white p-6 rounded-3xl border border-slate-100">
+            const filtered = allStudents.filter(s => 
+                s['ชื่อ'].includes(input) || s['นามสกุล'].includes(input) || s['เลขประจำตัวประชาชน'].includes(input)
+            );
+            
+            display.innerHTML = filtered.length === 0 ? '<p class="text-center text-slate-400">ไม่พบข้อมูล</p>' : '';
+            filtered.forEach(st => {
+                display.innerHTML += `
+                    <div class="bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between shadow-sm">
                         <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">เลขประจำตัวประชาชน</p>
-                            <p class="text-slate-700 font-medium">${st['เลขประจำตัวประชาชน'] || '-'}</p>
+                            <div class="font-bold text-slate-800 text-lg">${st['ชื่อ']} ${st['นามสกุล']}</div>
+                            <div class="text-sm text-slate-500">ม.${st['ชั้น']}/${st['ห้อง']} • ID: ${st['เลขประจำตัวประชาชน']}</div>
                         </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">รหัสประจำตัวนักเรียน</p>
-                            <p class="text-slate-700 font-medium">${st['รหัสประจำตัวนักเรียน'] || '-'}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">เพศ / อายุ</p>
-                            <p class="text-slate-700 font-medium">${st['เพศ'] === 'ช' ? 'ชาย' : 'หญิง'} (${st['อายุ(ปี)'] || '-'} ปี)</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">วันเกิด</p>
-                            <p class="text-slate-700 font-medium">${st['วันเกิด'] || '-'}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ศาสนา</p>
-                            <p class="text-slate-700 font-medium">${st['ศาสนา'] || '-'}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ความด้อยโอกาส</p>
-                            <p class="${st['ความด้อยโอกาส'] && st['ความด้อยโอกาส'] !== '-' ? 'text-rose-500' : 'text-slate-700'} font-medium">${st['ความด้อยโอกาส'] || '-'}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section: Address & Health -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-4">
-                        <h5 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-house-user text-sky-600"></i> ข้อมูลที่อยู่
-                        </h5>
-                        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4 text-sm">
-                             <div class="flex justify-between">
-                                <span class="text-slate-500">ที่อยู่:</span>
-                                <span class="text-slate-800 font-medium text-right">${st['บ้านเลขที่']} ม.${st['หมู่']} ต.${st['ตำบล']} อ.${st['อำเภอ']} จ.${st['จังหวัด']}</span>
-                             </div>
-                             <div class="flex justify-between">
-                                <span class="text-slate-500">ถนน/ซอย:</span>
-                                <span class="text-slate-800 font-medium">${st['ถนน/ซอย'] || '-'}</span>
-                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <h5 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-heart-pulse text-rose-500"></i> ข้อมูลสุขภาพ
-                        </h5>
-                        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 grid grid-cols-3 gap-4 text-center">
-                            <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                                <p class="text-[10px] text-slate-400 font-bold mb-1">น้ำหนัก</p>
-                                <p class="font-bold text-slate-700">${st['น้ำหนัก'] || '-'} <span class="text-[8px] text-slate-400">กก.</span></p>
-                            </div>
-                            <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                                <p class="text-[10px] text-slate-400 font-bold mb-1">ส่วนสูง</p>
-                                <p class="font-bold text-slate-700">${st['ส่วนสูง'] || '-'} <span class="text-[8px] text-slate-400">ซม.</span></p>
-                            </div>
-                            <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                                <p class="text-[10px] text-slate-400 font-bold mb-1">กลุ่มเลือด</p>
-                                <p class="font-bold text-slate-700">${st['กลุ่มเลือด'] || '-'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section: Guardians -->
-                <div class="space-y-4">
-                    <h5 class="font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-users text-amber-500"></i> ข้อมูลครอบครัวและผู้ปกครอง
-                    </h5>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 flex gap-4 items-center">
-                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-person-breastfeeding"></i></div>
-                            <div>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">มารดา</p>
-                                <p class="text-slate-800 font-medium">${st['ชื่อมารดา']} ${st['นามสกุลมารดา']}</p>
-                                <p class="text-[11px] text-slate-500">อาชีพ: ${st['อาชีพของมารดา'] || '-'}</p>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-slate-100 flex gap-4 items-center">
-                            <div class="w-12 h-12 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-person-cane"></i></div>
-                            <div>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">บิดา</p>
-                                <p class="text-slate-800 font-medium">${st['ชื่อบิดา']} ${st['นามสกุลบิดา']}</p>
-                                <p class="text-[11px] text-slate-500">อาชีพ: ${st['อาชีพของบิดา'] || '-'}</p>
-                            </div>
-                        </div>
-                        <div class="md:col-span-2 bg-amber-50/50 p-6 rounded-3xl border border-amber-100 flex gap-5 items-center">
-                             <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
-                                <i class="fa-solid fa-user-shield text-2xl"></i>
-                             </div>
-                             <div class="flex-1">
-                                <p class="text-[10px] text-amber-600 font-bold uppercase">ผู้ปกครองปัจจุบัน (${st['ความเกี่ยวข้องของผู้ปกครองกับนักเรียน'] || 'ไม่ระบุ'})</p>
-                                <p class="text-slate-800 font-bold text-lg">${st['ชื่อผู้ปกครอง']} ${st['นามสกุลผู้ปกครอง']}</p>
-                                <p class="text-sm text-slate-600">อาชีพ: ${st['อาชีพของผู้ปกครอง'] || '-'}</p>
-                             </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('detailModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // Prevent background scroll
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Close modal on click outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('detailModal');
-            if (event.target == modal) closeDetailModal();
+                        <div class="text-sky-600"><i class="fa-solid fa-circle-info text-xl"></i></div>
+                    </div>`;
+            });
         }
     </script>
 </body>
