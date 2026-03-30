@@ -10,6 +10,8 @@
     <style>
         body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
         .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
+        .login-card { animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -38,36 +40,49 @@
     </aside>
 
     <div class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto">
-        <main class="p-6 md:p-10 max-w-4xl mx-auto w-full flex flex-col items-center">
+        <main class="p-6 md:p-10 max-w-4xl mx-auto w-full flex flex-col items-center min-h-full">
             
-            <!-- Login Form -->
-            <div id="loginSection" class="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 mt-10">
+            <!-- Login Section -->
+            <div id="loginSection" class="login-card w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 my-auto">
                 <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-sky-100 text-sky-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">
-                        <i class="fa-solid fa-user-lock"></i>
+                    <div class="w-24 h-24 bg-sky-100 text-sky-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6">
+                        <i class="fa-solid fa-fingerprint"></i>
                     </div>
-                    <h2 class="text-2xl font-bold text-slate-800">นักเรียนเข้าสู่ระบบ</h2>
-                    <p class="text-slate-400 text-sm mt-2">ระบุเลขประจำตัวประชาชนเพื่อเข้าจัดการข้อมูล</p>
+                    <h2 class="text-2xl font-bold text-slate-800">เข้าสู่ระบบนักเรียน</h2>
+                    <p class="text-slate-400 text-sm mt-2">โปรดระบุเลขประจำตัวประชาชน 13 หลัก</p>
                 </div>
-                <div class="space-y-5">
-                    <input type="text" id="loginId" placeholder="เลขบัตรประชาชน 13 หลัก" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 ring-sky-500/20 text-center text-lg font-medium tracking-widest">
-                    <button onclick="login()" class="w-full bg-sky-600 text-white font-bold py-4 rounded-2xl hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all">ยืนยันตัวตน</button>
+                <div class="space-y-6">
+                    <div>
+                        <input type="text" id="loginId" maxlength="13" 
+                               placeholder="0-0000-00000-00-0" 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:ring-4 ring-sky-500/10 focus:border-sky-500 text-center text-xl font-bold tracking-widest text-slate-700 transition-all">
+                    </div>
+                    <button onclick="login()" id="loginBtn" class="w-full bg-sky-600 text-white font-bold py-5 rounded-2xl hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all flex items-center justify-center gap-3">
+                        <span>ตรวจสอบข้อมูล</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Edit Form (Hidden) -->
-            <div id="editSection" class="hidden w-full space-y-8">
+            <!-- Edit Section (Hidden) -->
+            <div id="editSection" class="hidden w-full space-y-8 py-10">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-bold text-slate-800">แก้ไขข้อมูลส่วนตัว</h2>
-                    <button onclick="location.reload()" class="text-rose-500 font-bold"><i class="fa-solid fa-right-from-bracket mr-1"></i> ออกจากระบบ</button>
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-800">จัดการข้อมูลส่วนตัว</h2>
+                        <p class="text-slate-500">คุณสามารถปรับปรุงข้อมูลให้เป็นปัจจุบันได้ที่นี่</p>
+                    </div>
+                    <button onclick="location.reload()" class="bg-rose-50 text-rose-500 px-5 py-2.5 rounded-xl font-bold hover:bg-rose-500 hover:text-white transition-all">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i>ออกจากระบบ
+                    </button>
                 </div>
+                
                 <div id="formContainer"></div>
             </div>
 
         </main>
     </div>
 
-    <div id="toast" class="fixed bottom-10 right-10 bg-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 transition-all z-[100] font-bold"></div>
+    <div id="toast" class="fixed bottom-10 right-10 bg-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 transition-all z-[100] font-bold pointer-events-none"></div>
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
@@ -75,67 +90,136 @@
         let currentStudent = null;
 
         window.onload = async () => {
-            const response = await fetch(`${scriptURL}?action=getAll`);
-            const res = await response.json();
-            allStudents = res.data || [];
+            try {
+                const response = await fetch(`${scriptURL}?action=getAll`);
+                const res = await response.json();
+                allStudents = res.data || [];
+            } catch (e) { showToast("โหลดข้อมูลล้มเหลว", false); }
         };
 
         function showToast(msg, success = true) {
             const t = document.getElementById('toast');
             t.innerText = msg;
             t.style.backgroundColor = success ? '#10b981' : '#f43f5e';
-            t.classList.remove('opacity-0');
-            setTimeout(() => t.classList.add('opacity-0'), 3000);
+            t.classList.remove('opacity-0', 'translate-y-5');
+            t.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                t.classList.remove('opacity-100', 'translate-y-0');
+                t.classList.add('opacity-0', 'translate-y-5');
+            }, 3000);
         }
 
-        function login() {
+        async function login() {
             const id = document.getElementById('loginId').value.trim();
-            const student = allStudents.find(s => s['เลขประจำตัวประชาชน'] == id);
-            if(!student) { showToast("ไม่พบข้อมูล หรือเลขไม่ถูกต้อง", false); return; }
+            const btn = document.getElementById('loginBtn');
             
-            currentStudent = student;
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('editSection').classList.remove('hidden');
-            renderForm();
+            if(id.length !== 13) { showToast("กรุณากรอกเลขบัตร 13 หลัก", false); return; }
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> กำลังตรวจสอบ...';
+            btn.disabled = true;
+
+            // หน่วงเวลาเล็กน้อยเพื่อให้ดูสมจริง
+            setTimeout(() => {
+                const student = allStudents.find(s => s['เลขประจำตัวประชาชน'] == id);
+                if(!student) { 
+                    showToast("ไม่พบข้อมูลนักเรียนรายนี้", false); 
+                    btn.innerHTML = '<span>ตรวจสอบข้อมูล</span> <i class="fa-solid fa-arrow-right"></i>';
+                    btn.disabled = false;
+                    return; 
+                }
+                
+                currentStudent = student;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('editSection').classList.remove('hidden');
+                renderForm();
+                showToast("ยินดีต้อนรับ " + student['ชื่อ']);
+            }, 800);
         }
 
         function renderForm() {
             const s = currentStudent;
             document.getElementById('formContainer').innerHTML = `
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                    <div class="flex items-center gap-6 mb-8 border-b border-slate-50 pb-8">
-                        <div class="w-16 h-16 bg-sky-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold">${s['ชื่อ'][0]}</div>
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="bg-sky-600 p-8 text-white flex items-center gap-6">
+                        <div class="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center text-4xl backdrop-blur-md">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800">${s['ชื่อ']} ${s['นามสกุล']}</h3>
-                            <p class="text-slate-500">ชั้น ม.${s['ชั้น']}/${s['ห้อง']} • เลขประจำตัว: ${s['เลขประจำตัวประชาชน']}</p>
+                            <h3 class="text-2xl font-bold">${s['ชื่อ']} ${s['นามสกุล']}</h3>
+                            <p class="opacity-80">ชั้น ม.${s['ชั้น']}/${s['ห้อง']} • รหัสประจำตัว: ${s['รหัสประจำตัวนักเรียน']}</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <label class="block text-sm font-bold text-slate-700">บ้านเลขที่</label>
-                            <input type="text" id="house" value="${s['บ้านเลขที่']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
-                            
-                            <label class="block text-sm font-bold text-slate-700">หมู่</label>
-                            <input type="text" id="moo" value="${s['หมู่']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                    
+                    <div class="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-house-user text-sky-500"></i> ข้อมูลที่อยู่
+                            </h4>
+                            <div class="space-y-4">
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">บ้านเลขที่</label>
+                                <input type="text" id="house" value="${s['บ้านเลขที่'] || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20"></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">หมู่</label>
+                                    <input type="text" id="moo" value="${s['หมู่'] || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ตำบล</label>
+                                    <input type="text" id="sub" value="${s['ตำบล'] || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-4">
-                            <label class="block text-sm font-bold text-slate-700">น้ำหนัก (กก.)</label>
-                            <input type="number" id="weight" value="${s['น้ำหนัก']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
-                            
-                            <label class="block text-sm font-bold text-slate-700">ส่วนสูง (ซม.)</label>
-                            <input type="number" id="height" value="${s['ส่วนสูง']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+
+                        <div class="space-y-6">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-heart-pulse text-rose-500"></i> ข้อมูลสุขภาพ
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">น้ำหนัก (กก.)</label>
+                                <input type="number" id="weight" value="${s['น้ำหนัก'] || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20"></div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ส่วนสูง (ซม.)</label>
+                                <input type="number" id="height" value="${s['ส่วนสูง'] || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20"></div>
+                            </div>
                         </div>
-                        <div class="md:col-span-2 pt-6">
-                            <button onclick="saveChanges()" class="w-full bg-sky-600 text-white font-bold py-4 rounded-2xl hover:bg-sky-700 shadow-lg">บันทึกข้อมูล</button>
+
+                        <div class="md:col-span-2 pt-8 border-t border-slate-50">
+                            <button onclick="saveChanges()" id="saveBtn" class="w-full bg-sky-600 text-white font-bold py-5 rounded-2xl hover:bg-sky-700 transition-all shadow-lg shadow-sky-100 flex items-center justify-center gap-3">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>อัปเดตข้อมูลของฉัน</span>
+                            </button>
                         </div>
                     </div>
                 </div>`;
         }
 
         async function saveChanges() {
-            showToast("กำลังส่งข้อมูล...");
-            // Simulate save
-            setTimeout(() => showToast("บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว!"), 1500);
+            const btn = document.getElementById('saveBtn');
+            const data = {
+                id: currentStudent['เลขประจำตัวประชาชน'],
+                house: document.getElementById('house').value,
+                moo: document.getElementById('moo').value,
+                sub: document.getElementById('sub').value,
+                weight: document.getElementById('weight').value,
+                height: document.getElementById('height').value
+            };
+            
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                // สร้าง URL สำหรับอัปเดตข้อมูลหลายฟิลด์
+                const url = `${scriptURL}?action=updateFull&id=${data.id}&house=${encodeURIComponent(data.house)}&moo=${encodeURIComponent(data.moo)}&sub=${encodeURIComponent(data.sub)}&weight=${data.weight}&height=${data.height}`;
+                const response = await fetch(url);
+                const res = await response.json();
+                
+                if(res.status === "success") {
+                    showToast("อัปเดตข้อมูลสำเร็จแล้ว!");
+                } else {
+                    showToast("ไม่สามารถบันทึกได้: " + res.message, false);
+                }
+            } catch(e) {
+                showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", false);
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>อัปเดตข้อมูลของฉัน</span>';
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
