@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMC SNR - Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100">
+            <i class="fa-solid fa-graduation-cap text-2xl text-sky-600 mr-3"></i>
+            <span class="font-bold text-xl text-slate-800">DMC SNR</span>
+        </div>
+        <nav class="flex-1 py-6 px-3 space-y-2">
+            <a href="index.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-chart-line w-6"></i><span class="ml-3">Dashboard</span>
+            </a>
+            <a href="teacher.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-chalkboard-user w-6"></i><span class="ml-3">สำหรับครูที่ปรึกษา</span>
+            </a>
+            <a href="student.html" class="flex items-center px-4 py-3 active-menu font-medium text-sky-600">
+                <i class="fa-solid fa-user-pen w-6"></i><span class="ml-3">สำหรับนักเรียน</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-400 uppercase">ระบบจัดการ</div>
+            <a href="admin.html" class="flex items-center px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i class="fa-solid fa-lock w-6"></i><span class="ml-3">Admin Panel</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto">
+        <main class="p-6 md:p-10 max-w-4xl mx-auto w-full flex flex-col items-center">
+            
+            <!-- Login Form -->
+            <div id="loginSection" class="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 mt-10">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-sky-100 text-sky-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">
+                        <i class="fa-solid fa-user-lock"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">นักเรียนเข้าสู่ระบบ</h2>
+                    <p class="text-slate-400 text-sm mt-2">ระบุเลขประจำตัวประชาชนเพื่อเข้าจัดการข้อมูล</p>
+                </div>
+                <div class="space-y-5">
+                    <input type="text" id="loginId" placeholder="เลขบัตรประชาชน 13 หลัก" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 ring-sky-500/20 text-center text-lg font-medium tracking-widest">
+                    <button onclick="login()" class="w-full bg-sky-600 text-white font-bold py-4 rounded-2xl hover:bg-sky-700 shadow-lg shadow-sky-100 transition-all">ยืนยันตัวตน</button>
+                </div>
+            </div>
+
+            <!-- Edit Form (Hidden) -->
+            <div id="editSection" class="hidden w-full space-y-8">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-slate-800">แก้ไขข้อมูลส่วนตัว</h2>
+                    <button onclick="location.reload()" class="text-rose-500 font-bold"><i class="fa-solid fa-right-from-bracket mr-1"></i> ออกจากระบบ</button>
+                </div>
+                <div id="formContainer"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 right-10 bg-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 transition-all z-[100] font-bold"></div>
+
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
+        let allStudents = [];
+        let currentStudent = null;
+
+        window.onload = async () => {
+            const response = await fetch(`${scriptURL}?action=getAll`);
+            const res = await response.json();
+            allStudents = res.data || [];
+        };
+
+        function showToast(msg, success = true) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.backgroundColor = success ? '#10b981' : '#f43f5e';
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 3000);
+        }
+
+        function login() {
+            const id = document.getElementById('loginId').value.trim();
+            const student = allStudents.find(s => s['เลขประจำตัวประชาชน'] == id);
+            if(!student) { showToast("ไม่พบข้อมูล หรือเลขไม่ถูกต้อง", false); return; }
+            
+            currentStudent = student;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('editSection').classList.remove('hidden');
+            renderForm();
+        }
+
+        function renderForm() {
+            const s = currentStudent;
+            document.getElementById('formContainer').innerHTML = `
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                    <div class="flex items-center gap-6 mb-8 border-b border-slate-50 pb-8">
+                        <div class="w-16 h-16 bg-sky-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold">${s['ชื่อ'][0]}</div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">${s['ชื่อ']} ${s['นามสกุล']}</h3>
+                            <p class="text-slate-500">ชั้น ม.${s['ชั้น']}/${s['ห้อง']} • เลขประจำตัว: ${s['เลขประจำตัวประชาชน']}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <label class="block text-sm font-bold text-slate-700">บ้านเลขที่</label>
+                            <input type="text" id="house" value="${s['บ้านเลขที่']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                            
+                            <label class="block text-sm font-bold text-slate-700">หมู่</label>
+                            <input type="text" id="moo" value="${s['หมู่']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                        </div>
+                        <div class="space-y-4">
+                            <label class="block text-sm font-bold text-slate-700">น้ำหนัก (กก.)</label>
+                            <input type="number" id="weight" value="${s['น้ำหนัก']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                            
+                            <label class="block text-sm font-bold text-slate-700">ส่วนสูง (ซม.)</label>
+                            <input type="number" id="height" value="${s['ส่วนสูง']}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                        </div>
+                        <div class="md:col-span-2 pt-6">
+                            <button onclick="saveChanges()" class="w-full bg-sky-600 text-white font-bold py-4 rounded-2xl hover:bg-sky-700 shadow-lg">บันทึกข้อมูล</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        async function saveChanges() {
+            showToast("กำลังส่งข้อมูล...");
+            // Simulate save
+            setTimeout(() => showToast("บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว!"), 1500);
+        }
+    </script>
+</body>
+</html>
