@@ -10,6 +10,10 @@
     <style>
         body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
         .active-menu { background-color: #f0f9ff; color: #0284c7; border-radius: 0.75rem; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .loading-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -39,17 +43,21 @@
 
     <div class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto">
         <main class="p-6 md:p-10 max-w-7xl mx-auto w-full">
-            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div class="mb-8 flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold text-slate-800">ระบบจัดการข้อมูลรายห้อง</h1>
-                    <p class="text-slate-500">เลือกชั้นและห้องเรียนเพื่อดูข้อมูลและอัปเดตน้ำหนัก-ส่วนสูง</p>
+                    <h1 class="text-3xl font-bold text-slate-800">จัดการข้อมูลรายห้อง</h1>
+                    <p class="text-slate-500">อัปเดตข้อมูลสุขภาพนักเรียนในชั้นเรียนที่รับผิดชอบ</p>
+                </div>
+                <div id="syncStatus" class="text-xs font-medium text-slate-400 flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-100">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> ระบบพร้อมใช้งาน
                 </div>
             </div>
 
+            <!-- Filters -->
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-8 flex flex-wrap gap-4 items-end">
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-2">ระดับชั้น</label>
-                    <select id="filterLevel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20">
+                    <select id="filterLevel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-sky-500/20 appearance-none">
                         <option value="">เลือกชั้น</option>
                         <option value="ม.1">ม.1</option><option value="ม.2">ม.2</option><option value="ม.3">ม.3</option>
                         <option value="ม.4">ม.4</option><option value="ม.5">ม.5</option><option value="ม.6">ม.6</option>
@@ -63,85 +71,155 @@
                         <option value="4">4</option><option value="5">5</option><option value="10">10</option>
                     </select>
                 </div>
-                <button onclick="filterData()" class="bg-sky-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all h-[52px]">แสดงข้อมูล</button>
+                <button onclick="fetchAndFilter()" id="loadBtn" class="bg-sky-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all h-[52px] flex items-center gap-2">
+                    <i class="fa-solid fa-arrows-rotate" id="loadIcon"></i> ดึงข้อมูล
+                </button>
             </div>
 
+            <!-- Table -->
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b border-slate-100">
-                            <tr>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase">ชื่อ-นามสกุล</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">น้ำหนัก (กก.)</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">ส่วนสูง (ซม.)</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">บันทึก</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-50">
-                            <tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 italic">กรุณาเลือกชั้นและห้องที่ต้องการ</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase">ชื่อ-นามสกุล</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center w-32">น้ำหนัก (กก.)</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center w-32">ส่วนสูง (ซม.)</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center w-24">บันทึก</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-50">
+                        <tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 italic font-light text-lg">กรุณาเลือกชั้นและห้องที่ต้องการจัดการข้อมูล</td></tr>
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-10 right-10 bg-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 transition-all z-[100] font-bold"></div>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-10 right-10 bg-slate-800 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 translate-y-5 transition-all z-[100] font-bold pointer-events-none flex items-center gap-3">
+        <span id="toastIcon"></span>
+        <span id="toastMsg"></span>
+    </div>
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw0FUZarEZYmF-BW0Jpw5wlYKsse2jPRjZt2LBfDIIRwcd98n-FtVwiaaSgpiX5mIU/exec';
         let allStudents = [];
 
-        window.onload = async () => {
-            const response = await fetch(`${scriptURL}?action=getAll`);
-            const res = await response.json();
-            allStudents = res.data || [];
-        };
-
-        function showToast(msg, success = true) {
+        function showToast(msg, type = 'success') {
             const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.backgroundColor = success ? '#10b981' : '#f43f5e';
-            t.classList.remove('opacity-0');
-            setTimeout(() => t.classList.add('opacity-0'), 3000);
+            const icon = document.getElementById('toastIcon');
+            const m = document.getElementById('toastMsg');
+            
+            m.innerText = msg;
+            t.className = `fixed bottom-10 right-10 text-white px-8 py-4 rounded-2xl shadow-2xl transition-all z-[100] font-bold flex items-center gap-3 ${type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`;
+            icon.innerHTML = type === 'success' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
+            
+            t.classList.remove('opacity-0', 'translate-y-5');
+            t.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                t.classList.remove('opacity-100', 'translate-y-0');
+                t.classList.add('opacity-0', 'translate-y-5');
+            }, 3000);
         }
 
-        function filterData() {
+        async function fetchAndFilter() {
             const lv = document.getElementById('filterLevel').value;
             const rm = document.getElementById('filterRoom').value;
+            const btn = document.getElementById('loadBtn');
+            const icon = document.getElementById('loadIcon');
             const body = document.getElementById('tableBody');
-            
-            if(!lv || !rm) { showToast("กรุณาเลือกให้ครบ", false); return; }
-            
-            const list = allStudents.filter(s => s['ชั้น'] == lv && s['ห้อง'] == rm);
-            body.innerHTML = list.length ? "" : '<tr><td colspan="4" class="px-6 py-10 text-center">ไม่พบนักเรียนในห้องนี้</td></tr>';
-            
+
+            if(!lv || !rm) { showToast("กรุณาเลือกชั้นและห้อง", "error"); return; }
+
+            // Start loading state
+            btn.disabled = true;
+            icon.classList.add('animate-spin');
+            body.innerHTML = '<tr><td colspan="4" class="px-6 py-20 text-center"><i class="fa-solid fa-spinner animate-spin text-3xl text-sky-500"></i><p class="mt-4 text-slate-400 font-medium">กำลังดึงข้อมูลล่าสุดจากระบบ...</p></td></tr>';
+
+            try {
+                const response = await fetch(`${scriptURL}?action=getAll`);
+                const res = await response.json();
+                allStudents = res.data || [];
+                
+                const list = allStudents.filter(s => s['ชั้น'] == lv && s['ห้อง'] == rm);
+                renderTable(list);
+            } catch (e) {
+                showToast("ไม่สามารถดึงข้อมูลได้", "error");
+                body.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-rose-400">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            } finally {
+                btn.disabled = false;
+                icon.classList.remove('animate-spin');
+            }
+        }
+
+        function renderTable(list) {
+            const body = document.getElementById('tableBody');
+            if(list.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 italic">ไม่พบรายชื่อนักเรียนในห้องที่เลือก</td></tr>';
+                return;
+            }
+
+            body.innerHTML = "";
             list.forEach(st => {
                 body.innerHTML += `
-                    <tr>
-                        <td class="px-6 py-4 font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</td>
-                        <td class="px-6 py-4 text-center">
-                            <input type="number" id="w-${st['เลขประจำตัวประชาชน']}" value="${st['น้ำหนัก'] || 0}" class="w-20 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-center">
+                    <tr class="hover:bg-slate-50/50 transition-all group">
+                        <td class="px-6 py-5">
+                            <div class="font-bold text-slate-700">${st['ชื่อ']} ${st['นามสกุล']}</div>
+                            <div class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">ID: ${st['เลขประจำตัวประชาชน']}</div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <input type="number" id="h-${st['เลขประจำตัวประชาชน']}" value="${st['ส่วนสูง'] || 0}" class="w-20 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-center">
+                        <td class="px-6 py-5 text-center">
+                            <input type="number" id="w-${st['เลขประจำตัวประชาชน']}" value="${st['น้ำหนัก'] || ''}" 
+                                   class="w-24 bg-white border border-slate-200 rounded-xl px-2 py-2 text-center focus:ring-2 ring-sky-500/20 outline-none transition-all hover:border-sky-300">
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <button onclick="saveHealth('${st['เลขประจำตัวประชาชน']}')" class="text-sky-600 hover:text-sky-800 font-bold"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <td class="px-6 py-5 text-center">
+                            <input type="number" id="h-${st['เลขประจำตัวประชาชน']}" value="${st['ส่วนสูง'] || ''}" 
+                                   class="w-24 bg-white border border-slate-200 rounded-xl px-2 py-2 text-center focus:ring-2 ring-sky-500/20 outline-none transition-all hover:border-sky-300">
+                        </td>
+                        <td class="px-6 py-5 text-center">
+                            <button onclick="saveOne('${st['เลขประจำตัวประชาชน']}')" id="btn-${st['เลขประจำตัวประชาชน']}"
+                                    class="w-11 h-11 bg-sky-50 text-sky-600 rounded-2xl hover:bg-sky-600 hover:text-white transition-all flex items-center justify-center mx-auto shadow-sm group-hover:scale-105 active:scale-95">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
                         </td>
                     </tr>`;
             });
         }
 
-        async function saveHealth(id) {
+        async function saveOne(id) {
             const w = document.getElementById(`w-${id}`).value;
             const h = document.getElementById(`h-${id}`).value;
-            showToast("กำลังบันทึก...");
+            const btn = document.getElementById(`btn-${id}`);
+            
+            if(!w || !h) { showToast("กรุณากรอกข้อมูลสุขภาพ", "error"); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
+
             try {
-                await fetch(`${scriptURL}?action=update&id=${id}&weight=${w}&height=${h}`);
-                showToast("บันทึกสำเร็จ!");
-            } catch(e) { showToast("เกิดข้อผิดพลาด", false); }
+                const response = await fetch(`${scriptURL}?action=update&id=${id}&weight=${w}&height=${h}`);
+                const res = await response.json();
+                
+                if(res.status === "success") {
+                    showToast("บันทึกข้อมูลเรียบร้อย");
+                    btn.classList.replace('bg-sky-50', 'bg-emerald-50');
+                    btn.classList.replace('text-sky-600', 'text-emerald-600');
+                    // อัปเดตข้อมูลในเครื่องด้วย
+                    const idx = allStudents.findIndex(s => s['เลขประจำตัวประชาชน'] == id);
+                    if(idx !== -1) { allStudents[idx]['น้ำหนัก'] = w; allStudents[idx]['ส่วนสูง'] = h; }
+                } else {
+                    showToast(res.message || "บันทึกไม่สำเร็จ", "error");
+                }
+            } catch (e) {
+                showToast("การเชื่อมต่อล้มเหลว", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i>';
+                    btn.classList.remove('bg-emerald-50', 'text-emerald-600');
+                    btn.classList.add('bg-sky-50', 'text-sky-600');
+                }, 2000);
+            }
         }
     </script>
 </body>
